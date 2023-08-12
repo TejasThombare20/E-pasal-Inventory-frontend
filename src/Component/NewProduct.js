@@ -71,9 +71,17 @@ const NewProduct = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     // console.log(data);
-    const { product_name, category,sub_category,sub_sub_category, description, quantity, image, price } =
-      data;
-      console.log("data", data);
+    const {
+      product_name,
+      category,
+      sub_category,
+      sub_sub_category,
+      description,
+      quantity,
+      image,
+      price,
+    } = data;
+    console.log("data", data);
     const response = await axios.post(
       `${api}/api/product/addProduct`,
       JSON.stringify({
@@ -129,34 +137,104 @@ const NewProduct = () => {
   const [selectedSubcategory, setSelectedSubcategory] = useState("");
   const [selectedSubSubcategory, setSelectedSubSubcategory] = useState("");
 
-  const categories = ["Category 1", "Category 2", "Category 3"];
+  const categories = [
+    "Groceries",
+    "Bakery and Dairy",
+    "Egg and Meat",
+    "Beverages",
+    "Packaged Foods",
+  ];
   const subcategories = {
-    "Category 1": ["Subcategory 1.1", "Subcategory 1.2", "Subcategory 1.3"],
-    "Category 2": ["Subcategory 2.1", "Subcategory 2.2"],
-    "Category 3": ["Subcategory 3.1", "Subcategory 3.2", "Subcategory 3.3"],
+    "Groceries": [
+      "Rice & Rice Products",
+      "Atta, Flour & Suji",
+      "Cooking Oil & Ghee",
+      "Dal & Pulses",
+    ],
+    "Bakery and Dairy": [
+      "Bread and Croissants",
+      "Dairy",
+      "Home Making",
+      "Icecream & Desserts",
+      "Muffins & Cookies",
+    ],
+    "Egg and Meat": [
+      "Eggs",
+      "Frozen Meet",
+      "Frozen Snacks",
+      "Sausage Ham & Salami",
+    ],
+    "Beverages": [
+      "Cocktail Mixes",
+      "Coffee",
+      "Energy And Health drinks",
+      "Fruit Juice and Drinks",
+      "Soft drinks",
+      "Tea",
+      "Water",
+      "Alcohol",
+    ],
+    "Packaged Foods": [
+      "Biscuits & Cookies",
+      "Breakfast Cereals",
+      " Canned & Processed food",
+      "Chocolates and Candies",
+      "Frozen Meal & snacks",
+      "Noodles & Pasta",
+      "Pickles & Chutney",
+      "Ready to cook Mixes",
+      "Snacks",
+      "Spreads, Sauce & Ketchup",
+    ],
   };
   const subsubcategories = {
-    "Subcategory 1.1": ["Sub-Subcategory 1.1.1", "Sub-Subcategory 1.1.2"],
-    "Subcategory 1.2": ["Sub-Subcategory 1.2.1"],
+    "Rice & Rice Products": [
+      "Beaten Rice",
+      "Boiled Rice",
+      "Brown Rice",
+      "Jeera Masino Rice",
+      "Long Grain rice",
+      "Premium Basmati rice",
+      "Sona Mansuli Rice",
+      "Premium Rice from Nepal",
+      "Other Rice Products	",
+    ],
+    "Atta, Flour & Suji": ["Atta", "Besan & Suji", " Maida", "Other Flours"],
+
+    "Cooking Oil & Ghee": [
+      "Corn oil & others",
+      "Ghee",
+      "Olive oil",
+      "Sunflower cooking oil",
+      "Soya & Mustard oil",
+    ],
+    "Dairy": [
+      "Butter",
+      "Cheese & Tofu",
+      "Creamer & Whitener",
+      "Milk & Milk Products",
+    ],
+
+
     // Add more sub-subcategories here
   };
 
   const handleCategoryChange = (event) => {
     setSelectedCategory(event.target.value);
-    onChange(event)
+    onChange(event);
     setSelectedSubcategory("");
     setSelectedSubSubcategory("");
   };
 
   const handleSubcategoryChange = (event) => {
     setSelectedSubcategory(event.target.value);
-    onChange(event)
+    onChange(event);
     setSelectedSubSubcategory("");
   };
   const handleSubSubcategoryChange = (event) => {
     setSelectedSubSubcategory(event.target.value);
-    onChange(event)
-};
+    onChange(event);
+  };
 
   return (
     <div className="  p-4 ">
@@ -177,8 +255,6 @@ const NewProduct = () => {
           className="bg-slate-200 px-2 py-1 my-1"
         />
 
-        
-
         <label htmlFor="category" className="mt-1">
           Category:
         </label>
@@ -194,13 +270,13 @@ const NewProduct = () => {
           </option>
           {categories.map((category) => (
             <option name="category" value={category}>
-              {category}
+             Category :   {category}
             </option>
           ))}
         </select>
 
         <label htmlFor="sub_category" className="mt-1">
-          Subcategory:
+          Section:
         </label>
         <select
           name="sub_category"
@@ -211,7 +287,7 @@ const NewProduct = () => {
           className="bg-slate-200 px-2 py-1 my-1"
         >
           <option disabled selected value="">
-            Select an subcategory
+            Select an section
           </option>
           {subcategories[selectedCategory] &&
             subcategories[selectedCategory].map((subcategory) => (
@@ -222,7 +298,7 @@ const NewProduct = () => {
         </select>
 
         <label htmlFor="sub_sub_category" className="mt-1">
-          Select Sub-Subcategory
+        Sub-section :
         </label>
         <select
           name="sub_sub_category"
@@ -232,8 +308,8 @@ const NewProduct = () => {
           disabled={!selectedSubcategory}
           className="bg-slate-200 px-2 py-1 my-1"
         >
-         <option disabled selected value="">
-            Select an  sub-subcategory
+          <option disabled selected value="">
+            Select an sub-section
           </option>
           {selectedSubcategory &&
             subsubcategories[selectedSubcategory] &&
@@ -342,9 +418,9 @@ const NewProduct = () => {
 
             <p className="text-xl font-semibold my-1">{product.product_name}</p>
 
-            <p className="text-gray-500 my-1">{product.category}</p>
-            <p className="text-gray-500 my-1">{product.sub_category}</p>
-            <p className="text-gray-500 my-1">{product.sub_sub_category}</p>
+            <p className="text-gray-500 my-1"><p className="text-black">Category</p>{product.category}</p>
+            <p className="text-gray-500 my-1"><p className="text-black">Section</p>{product.sub_category}</p>
+            <p className="text-gray-500 my-1"><p className="text-black">Sub-section</p>{product.sub_sub_category}</p>
 
             <div className="flex justify-start items-center gap-4 my-1">
               <p className="text-xl font-semibold text-red-500">

@@ -111,15 +111,85 @@ function Modal({ product, onClose }) {
   const [selectedSubcategory, setSelectedSubcategory] = useState("");
   const [selectedSubSubcategory, setSelectedSubSubcategory] = useState("");
 
-  const categories = ["Category 1", "Category 2", "Category 3"];
+  const categories = [
+    "Groceries",
+    "Bakery and Dairy",
+    "Egg and Meat",
+    "Beverages",
+    "Packaged Foods",
+  ];
   const subcategories = {
-    "Category 1": ["Subcategory 1.1", "Subcategory 1.2", "Subcategory 1.3"],
-    "Category 2": ["Subcategory 2.1", "Subcategory 2.2"],
-    "Category 3": ["Subcategory 3.1", "Subcategory 3.2", "Subcategory 3.3"],
+    "Groceries": [
+      "Rice & Rice Products",
+      "Atta, Flour & Suji",
+      "Cooking Oil & Ghee",
+      "Dal & Pulses",
+    ],
+    "Bakery and Dairy": [
+      "Bread and Croissants",
+      "Dairy",
+      "Home Making",
+      "Icecream & Desserts",
+      "Muffins & Cookies",
+    ],
+    "Egg and Meat": [
+      "Eggs",
+      "Frozen Meet",
+      "Frozen Snacks",
+      "Sausage Ham & Salami",
+    ],
+    "Beverages": [
+      "Cocktail Mixes",
+      "Coffee",
+      "Energy And Health drinks",
+      "Fruit Juice and Drinks",
+      "Soft drinks",
+      "Tea",
+      "Water",
+      "Alcohol",
+    ],
+    "Packaged Foods": [
+      "Biscuits & Cookies",
+      "Breakfast Cereals",
+      " Canned & Processed food",
+      "Chocolates and Candies",
+      "Frozen Meal & snacks",
+      "Noodles & Pasta",
+      "Pickles & Chutney",
+      "Ready to cook Mixes",
+      "Snacks",
+      "Spreads, Sauce & Ketchup",
+    ],
   };
   const subsubcategories = {
-    "Subcategory 1.1": ["Sub-Subcategory 1.1.1", "Sub-Subcategory 1.1.2"],
-    "Subcategory 1.2": ["Sub-Subcategory 1.2.1"],
+    "Rice & Rice Products": [
+      "Beaten Rice",
+      "Boiled Rice",
+      "Brown Rice",
+      "Jeera Masino Rice",
+      "Long Grain rice",
+      "Premium Basmati rice",
+      "Sona Mansuli Rice",
+      "Premium Rice from Nepal",
+      "Other Rice Products	",
+    ],
+    "Atta, Flour & Suji": ["Atta", "Besan & Suji", " Maida", "Other Flours"],
+
+    "Cooking Oil & Ghee": [
+      "Corn oil & others",
+      "Ghee",
+      "Olive oil",
+      "Sunflower cooking oil",
+      "Soya & Mustard oil",
+    ],
+    "Dairy": [
+      "Butter",
+      "Cheese & Tofu",
+      "Creamer & Whitener",
+      "Milk & Milk Products",
+    ],
+    
+
     // Add more sub-subcategories here
   };
 
@@ -228,7 +298,7 @@ function Modal({ product, onClose }) {
                                 </select>
 
                                 <label htmlFor="u_sub_category" className="mt-1">
-                                  Subcategory:
+                                  Section :
                                 </label>
                                 <select
                                   name="u_sub_category"
@@ -239,7 +309,7 @@ function Modal({ product, onClose }) {
                                   className="bg-slate-200 px-2 py-1 my-1"
                                 >
                                   <option disabled selected value="">
-                                    Select an subcategory
+                                    Select an section
                                   </option>
                                   {subcategories[selectedCategory] &&
                                     subcategories[selectedCategory].map(
@@ -258,7 +328,7 @@ function Modal({ product, onClose }) {
                                   htmlFor="u_sub_sub_category"
                                   className="mt-1"
                                 >
-                                  Select Sub-Subcategory
+                                  Sub-section
                                 </label>
                                 <select
                                   name="u_sub_sub_category"
@@ -269,7 +339,7 @@ function Modal({ product, onClose }) {
                                   className="bg-slate-200 px-2 py-1 my-1"
                                 >
                                   <option disabled selected value="">
-                                    Select an sub-subcategory
+                                    Select an sub-section
                                   </option>
                                   {selectedSubcategory &&
                                     subsubcategories[selectedSubcategory] &&
