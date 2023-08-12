@@ -1,7 +1,7 @@
 import React from "react";
 import { Fragment, useRef, useState } from "react";
 import { Dialog, Transition } from "@headlessui/react";
-import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
+
 import { FaUpload } from "react-icons/fa";
 import { imageToBase64 } from "../Utility/ImageToBase64";
 import axios from "axios";
@@ -16,18 +16,22 @@ function Modal({ product, onClose }) {
   const [data, setdata] = useState({
     u_product_name: "",
     u_category: "",
+    u_sub_category: "",
+    u_sub_sub_category: "",
     u_description: "",
     u_image: "",
     u_quantity: "",
     u_price: "",
   });
 
-  const handleClose = () => { 
-    window.location.reload()
+  const handleClose = () => {
+    window.location.reload();
     setOpen(false);
     setdata({
       u_product_name: "",
       u_category: "",
+      u_sub_category: "",
+      u_sub_sub_category: "",
       u_description: "",
       u_image: "",
       u_quantity: "",
@@ -68,6 +72,8 @@ function Modal({ product, onClose }) {
       const {
         u_product_name,
         u_category,
+        u_sub_category,
+        u_sub_sub_category,
         u_description,
         u_quantity,
         u_image,
@@ -76,6 +82,8 @@ function Modal({ product, onClose }) {
       const updatedProduct = {};
       if (u_product_name) updatedProduct.u_product_name = u_product_name;
       if (u_category) updatedProduct.u_category = u_category;
+      if (u_sub_category) updatedProduct.u_sub_category = u_sub_category;
+      if (u_sub_sub_category)updatedProduct.u_sub_sub_category = u_sub_sub_category;
       if (u_description) updatedProduct.u_description = u_description;
       if (u_quantity) updatedProduct.u_quantity = u_quantity;
       if (u_image) updatedProduct.u_image = u_image;
@@ -98,6 +106,38 @@ function Modal({ product, onClose }) {
     } catch (error) {
       console.error("Error updating product:", error.message);
     }
+  };
+  const [selectedCategory, setSelectedCategory] = useState("");
+  const [selectedSubcategory, setSelectedSubcategory] = useState("");
+  const [selectedSubSubcategory, setSelectedSubSubcategory] = useState("");
+
+  const categories = ["Category 1", "Category 2", "Category 3"];
+  const subcategories = {
+    "Category 1": ["Subcategory 1.1", "Subcategory 1.2", "Subcategory 1.3"],
+    "Category 2": ["Subcategory 2.1", "Subcategory 2.2"],
+    "Category 3": ["Subcategory 3.1", "Subcategory 3.2", "Subcategory 3.3"],
+  };
+  const subsubcategories = {
+    "Subcategory 1.1": ["Sub-Subcategory 1.1.1", "Sub-Subcategory 1.1.2"],
+    "Subcategory 1.2": ["Sub-Subcategory 1.2.1"],
+    // Add more sub-subcategories here
+  };
+
+  const handleCategoryChange = (event) => {
+    setSelectedCategory(event.target.value);
+    onChange(event);
+    setSelectedSubcategory("");
+    setSelectedSubSubcategory("");
+  };
+
+  const handleSubcategoryChange = (event) => {
+    setSelectedSubcategory(event.target.value);
+    onChange(event);
+    setSelectedSubSubcategory("");
+  };
+  const handleSubSubcategoryChange = (event) => {
+    setSelectedSubSubcategory(event.target.value);
+    onChange(event);
   };
 
   return (
@@ -166,77 +206,83 @@ function Modal({ product, onClose }) {
                                   className="bg-slate-200 px-2 py-1 my-1"
                                 />
 
-                                {/* <label htmlFor="category" className="mt-1">
-                                  Category :
-                                </label>
-                                <input
-                                  id="u_category"
-                                  type="text"
-                                  name="u_category"
-                                  value={data.u_category}
-                                  placeholder={product.category}
-                                  onChange={onChange}
-                                  className="bg-slate-200 px-2 py-1 my-1"
-                                /> */}
-
-                                <label htmlFor="u_category" className="mt-1">
-                                  Category :
+                                <label htmlFor="category" className="mt-1">
+                                  Category:
                                 </label>
                                 <select
                                   name="u_category"
                                   id="u_category"
-                                  onChange={onChange}
-                                  defaultValue={product.category}
+                                  value={selectedCategory}
+                                
+                                  onChange={handleCategoryChange}
                                   className="bg-slate-200 px-2 py-1 my-1"
                                 >
-                                  <option disabled selected value=""    >Select an category</option>
-                                 
-                                  <option name="u_category" value={"category1"}>
-                                    category1
+                                  <option disabled selected value="">
+                                    Select an category
                                   </option>
-                                  <option name="u_category" value={"category2"}>
-                                    category2
+                                  {categories.map((u_category) => (
+                                    <option name="u_category" value={u_category}>
+                                      {u_category}
+                                    </option>
+                                  ))}
+                                </select>
+
+                                <label htmlFor="u_sub_category" className="mt-1">
+                                  Subcategory:
+                                </label>
+                                <select
+                                  name="u_sub_category"
+                                  id="u_sub_category"
+                                  value={selectedSubcategory}
+                                  onChange={handleSubcategoryChange}
+                                  disabled={!selectedCategory}
+                                  className="bg-slate-200 px-2 py-1 my-1"
+                                >
+                                  <option disabled selected value="">
+                                    Select an subcategory
                                   </option>
-                                  <option name="u_category" value={"category3"}>
-                                    category3
+                                  {subcategories[selectedCategory] &&
+                                    subcategories[selectedCategory].map(
+                                      (u_sub_category) => (
+                                        <option
+                                          name="u_sub_category"
+                                          value={u_sub_category}
+                                        >
+                                          {u_sub_category}
+                                        </option>
+                                      )
+                                    )}
+                                </select>
+
+                                <label
+                                  htmlFor="u_sub_sub_category"
+                                  className="mt-1"
+                                >
+                                  Select Sub-Subcategory
+                                </label>
+                                <select
+                                  name="u_sub_sub_category"
+                                  id="u_sub_sub_category"
+                                  value={selectedSubSubcategory}
+                                  onChange={handleSubSubcategoryChange}
+                                  disabled={!selectedSubcategory}
+                                  className="bg-slate-200 px-2 py-1 my-1"
+                                >
+                                  <option disabled selected value="">
+                                    Select an sub-subcategory
                                   </option>
-                                  <option name="u_category" value={"category4"}>
-                                    category4
-                                  </option>
-                                  <option name="u_category" value={"category5"}>
-                                    category5
-                                  </option>
-                                  <option name="u_category" value={"category6"}>
-                                    category6
-                                  </option>
-                                  <option name="u_category" value={"category7"}>
-                                    category7
-                                  </option>
-                                  <option name="u_category" value={"category8"}>
-                                    category8
-                                  </option>
-                                  <option name="u_category" value={"category9"}>
-                                    category9
-                                  </option>
-                                  <option name="u_category" value={"category10"}>
-                                    category10
-                                  </option>
-                                  <option name="u_category" value={"category11"}>
-                                    category11
-                                  </option>
-                                  <option name="u_category" value={"category12"}>
-                                    category12
-                                  </option>
-                                  <option name="u_category" value={"category13"}>
-                                    category13
-                                  </option>
-                                  <option name="u_category" value={"category14"}>
-                                    category14
-                                  </option>
-                                  <option name="u_category" value={"category15"}>
-                                    category15
-                                  </option>
-                                  
+                                  {selectedSubcategory &&
+                                    subsubcategories[selectedSubcategory] &&
+                                    subsubcategories[selectedSubcategory].map(
+                                      (u_sub_sub_category) => (
+                                        <option
+                                          name="u_sub_sub_category"
+                                          value={u_sub_sub_category}
+                                        >
+                                          {u_sub_sub_category}
+                                        </option>
+                                      )
+                                    )}
                                 </select>
 
                                 <label

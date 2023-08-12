@@ -21,14 +21,14 @@ const NewProduct = () => {
   const [data, setdata] = useState({
     product_name: "",
     category: "",
+    sub_category: "",
+    sub_sub_category: "",
     image: "",
     price: "",
     quantity: "",
     description: "",
   });
 
-  // const [products, setProducts] = useState([]);
-  // const [selectedProduct, setSelectedProduct] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedProductId, setSelectedProductId] = useState(null);
   const handleUpdateClick = (product) => {
@@ -36,24 +36,6 @@ const NewProduct = () => {
     setSelectedProductId(product); // Step 2
     setIsModalOpen(true);
   };
-
-  // const closeModal = () => {
-  //   setSelectedProduct(null);
-  //   setIsModalOpen(false);
-  // };
-
-  // useEffect(() => {
-  //   async function fetchData() {
-  //     try {
-  //       const response = await axios.get(`${api}/api/product/fetchAllProduct`); // Make sure the URL matches your backend route
-  //       setProducts(response.data);
-  //     } catch (error) {
-  //       console.error("Error fetching products:", error);
-  //     }
-  //   }
-
-  //   fetchData();
-  // }, []);
 
   const uploadImage = async (e) => {
     const data1 = await imageToBase64(e.target.files[0]);
@@ -89,13 +71,16 @@ const NewProduct = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     // console.log(data);
-    const { product_name, category, description, quantity, image, price } =
+    const { product_name, category,sub_category,sub_sub_category, description, quantity, image, price } =
       data;
+      console.log("data", data);
     const response = await axios.post(
       `${api}/api/product/addProduct`,
       JSON.stringify({
         product_name,
         category,
+        sub_category,
+        sub_sub_category,
         description,
         quantity,
         image,
@@ -140,24 +125,38 @@ const NewProduct = () => {
     }
   };
 
-  const categorySubcategoryMap = {
-    category1: ["subcategory1_1", "subcategory1_2"],
-    category2: ["subcategory2_1", "subcategory2_2"],
-    category3: ["subcategory3_1", "subcategory3_2"],
-    category4: ["subcategory4_1", "subcategory4_2"],
-    category5: ["subcategory5_1", "subcategory5_2"],
-    category6: ["subcategory6_1", "subcategory6_2"],
-    category7: ["subcategory7_1", "subcategory7_2"],
-    category8: ["subcategory8_1", "subcategory8_2"],
-    category9: ["subcategory9_1", "subcategory9_2"],
-    category10: ["subcategory10_1", "subcategory10_2"],
-    category11: ["subcategory11_1", "subcategory11_2"],
-    category12: ["subcategory12_1", "subcategory12_2"],
-    category13: ["subcategory13_1", "subcategory13_2"],
-    category14: ["subcategory14_1", "subcategory14_2"],
-    category15: ["subcategory15_1", "subcategory15_2"],
-    
+  const [selectedCategory, setSelectedCategory] = useState("");
+  const [selectedSubcategory, setSelectedSubcategory] = useState("");
+  const [selectedSubSubcategory, setSelectedSubSubcategory] = useState("");
+
+  const categories = ["Category 1", "Category 2", "Category 3"];
+  const subcategories = {
+    "Category 1": ["Subcategory 1.1", "Subcategory 1.2", "Subcategory 1.3"],
+    "Category 2": ["Subcategory 2.1", "Subcategory 2.2"],
+    "Category 3": ["Subcategory 3.1", "Subcategory 3.2", "Subcategory 3.3"],
   };
+  const subsubcategories = {
+    "Subcategory 1.1": ["Sub-Subcategory 1.1.1", "Sub-Subcategory 1.1.2"],
+    "Subcategory 1.2": ["Sub-Subcategory 1.2.1"],
+    // Add more sub-subcategories here
+  };
+
+  const handleCategoryChange = (event) => {
+    setSelectedCategory(event.target.value);
+    onChange(event)
+    setSelectedSubcategory("");
+    setSelectedSubSubcategory("");
+  };
+
+  const handleSubcategoryChange = (event) => {
+    setSelectedSubcategory(event.target.value);
+    onChange(event)
+    setSelectedSubSubcategory("");
+  };
+  const handleSubSubcategoryChange = (event) => {
+    setSelectedSubSubcategory(event.target.value);
+    onChange(event)
+};
 
   return (
     <div className="  p-4 ">
@@ -178,91 +177,72 @@ const NewProduct = () => {
           className="bg-slate-200 px-2 py-1 my-1"
         />
 
+        
+
         <label htmlFor="category" className="mt-1">
-          Category :
+          Category:
         </label>
         <select
           name="category"
           id="category"
-          onChange={onChange}
-          placeholder="choose category"
+          value={selectedCategory}
+          onChange={handleCategoryChange}
           className="bg-slate-200 px-2 py-1 my-1"
         >
           <option disabled selected value="">
             Select an category
           </option>
-          
-          <option name="category" value={"category1"}>
-            category1
-          </option>
-          <option name="category" value={"category2"}>
-            category2
-          </option>
-          <option name="category" value={"category3"}>
-            category3
-          </option>
-          <option name="category" value={"category4"}>
-            category4
-          </option>
-          <option name="category" value={"category5"}>
-            category5
-          </option>
-          <option name="category" value={"category6"}>
-            category6
-          </option>
-          <option name="category" value={"category7"}>
-            category7
-          </option>
-          <option name="category" value={"category8"}>
-            category8
-          </option>
-          <option name="category" value={"category9"}>
-            category9
-          </option>
-          <option name="category" value={"category10"}>
-            category10
-          </option>
-          <option name="category" value={"category11"}>
-            category11
-          </option>
-          <option name="category" value={"category12"}>
-            category12
-          </option>
-          <option name="category" value={"category13"}>
-            category13
-          </option>
-          <option name="category" value={"category14"}>
-            category14
-          </option>
-          <option name="category" value={"category15"}>
-            category15
-          </option>
+          {categories.map((category) => (
+            <option name="category" value={category}>
+              {category}
+            </option>
+          ))}
         </select>
-        <label htmlFor="category" className="mt-1">
-          Category:
+
+        <label htmlFor="sub_category" className="mt-1">
+          Subcategory:
         </label>
-        {/* <select
-          name="category"
-          id="category"
-          onChange={onChange}
-          placeholder="choose category"
+        <select
+          name="sub_category"
+          id="sub_category"
+          value={selectedSubcategory}
+          onChange={handleSubcategoryChange}
+          disabled={!selectedCategory}
           className="bg-slate-200 px-2 py-1 my-1"
         >
           <option disabled selected value="">
-            Select a category
-          </option> */}
+            Select an subcategory
+          </option>
+          {subcategories[selectedCategory] &&
+            subcategories[selectedCategory].map((subcategory) => (
+              <option name="sub_category" value={subcategory}>
+                {subcategory}
+              </option>
+            ))}
+        </select>
 
-          {/* Render main categories */}
-          {/* {Object.keys(categorySubcategoryMap).map((mainCategory) => (
-            <optgroup label='category'>
-              {categorySubcategoryMap[mainCategory].map((subcategory) => (
-                <option name="category" value={subcategory} key={subcategory}>
-                  {subcategory}
-                </option>
-              ))}
-            </optgroup>
-          ))} */}
-        {/* </select> */}
+        <label htmlFor="sub_sub_category" className="mt-1">
+          Select Sub-Subcategory
+        </label>
+        <select
+          name="sub_sub_category"
+          id="sub_sub_category"
+          value={selectedSubSubcategory}
+          onChange={handleSubSubcategoryChange}
+          disabled={!selectedSubcategory}
+          className="bg-slate-200 px-2 py-1 my-1"
+        >
+         <option disabled selected value="">
+            Select an  sub-subcategory
+          </option>
+          {selectedSubcategory &&
+            subsubcategories[selectedSubcategory] &&
+            subsubcategories[selectedSubcategory].map((subsubcategory) => (
+              <option name="sub_sub_category" value={subsubcategory}>
+                {subsubcategory}
+              </option>
+            ))}
+        </select>
 
         <label htmlFor="image" className="mt-1 cursor-pointer">
           Image :
@@ -363,6 +343,8 @@ const NewProduct = () => {
             <p className="text-xl font-semibold my-1">{product.product_name}</p>
 
             <p className="text-gray-500 my-1">{product.category}</p>
+            <p className="text-gray-500 my-1">{product.sub_category}</p>
+            <p className="text-gray-500 my-1">{product.sub_sub_category}</p>
 
             <div className="flex justify-start items-center gap-4 my-1">
               <p className="text-xl font-semibold text-red-500">
