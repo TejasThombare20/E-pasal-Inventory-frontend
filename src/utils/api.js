@@ -1,2 +1,2 @@
-const api = "https://e-pasal.onrender.com";
+const api = "https://e-pasal-inventory-backend.onrender.com";
 module.exports  = api;
