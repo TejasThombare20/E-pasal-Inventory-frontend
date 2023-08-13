@@ -24,7 +24,7 @@ const Header = () => {
   const handleshowmenu = () => {
     setmenu((prev) => !prev);
     console.log(userData.email);
-    console.log(adminID);
+    
   };
   const logoutClick = () => {
     dispatch(logoutRedux());

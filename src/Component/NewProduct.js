@@ -5,19 +5,14 @@ import { imageToBase64 } from "../Utility/ImageToBase64";
 import axios from "axios";
 import { toast } from "react-hot-toast";
 import api from "../utils/api";
-import { AiFillDelete } from "react-icons/ai";
-import { BiEdit } from "react-icons/bi";
-import { HiCurrencyRupee } from "react-icons/hi";
 import Modal from "../Component/Modal";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, NavLink } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
 
 const NewProduct = () => {
   const productData = useSelector((state) => state.product.productList);
-  const userData = useSelector((state) => state.user);
-  const Navigate = useNavigate();
-
   const reversedProductData = [...productData].reverse();
-  console.log("productData", productData);
+  // console.log("productData", productData);
   const [data, setdata] = useState({
     product_name: "",
     category: "",
@@ -32,7 +27,7 @@ const NewProduct = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedProductId, setSelectedProductId] = useState(null);
   const handleUpdateClick = (product) => {
-    console.log("product ", product);
+    // console.log("product ", product);
     setSelectedProductId(product); // Step 2
     setIsModalOpen(true);
   };
@@ -70,7 +65,6 @@ const NewProduct = () => {
   };
   const handleSubmit = async (e) => {
     e.preventDefault();
-    // console.log(data);
     const {
       product_name,
       category,
@@ -81,7 +75,7 @@ const NewProduct = () => {
       image,
       price,
     } = data;
-    console.log("data", data);
+    // console.log("data", data);
     const response = await axios.post(
       `${api}/api/product/addProduct`,
       JSON.stringify({
@@ -133,18 +127,14 @@ const NewProduct = () => {
     }
   };
 
-  const [selectedCategory, setSelectedCategory] = useState("");
-  const [selectedSubcategory, setSelectedSubcategory] = useState("");
-  const [selectedSubSubcategory, setSelectedSubSubcategory] = useState("");
-
-  const categories = [
+  const [categories, setCategories] = useState([
     "Groceries",
     "Bakery and Dairy",
     "Egg and Meat",
     "Beverages",
     "Packaged Foods",
-  ];
-  const subcategories = {
+  ]);
+  const [subcategories, setSubcategories] = useState({
     "Groceries": [
       "Rice & Rice Products",
       "Atta, Flour & Suji",
@@ -186,8 +176,8 @@ const NewProduct = () => {
       "Snacks",
       "Spreads, Sauce & Ketchup",
     ],
-  };
-  const subsubcategories = {
+  });
+  const [subsubcategories, setSubsubcategories] = useState({
     "Rice & Rice Products": [
       "Beaten Rice",
       "Boiled Rice",
@@ -215,9 +205,15 @@ const NewProduct = () => {
       "Milk & Milk Products",
     ],
 
-
     // Add more sub-subcategories here
-  };
+  });
+  const [selectedCategory, setSelectedCategory] = useState("");
+  const [selectedSubcategory, setSelectedSubcategory] = useState("");
+  const [selectedSubSubcategory, setSelectedSubSubcategory] = useState("");
+
+  const [newCategory, setNewCategory] = useState("");
+  const [newSection, setNewSection] = useState("");
+  const [newSubSection, setNewSubSection] = useState("");
 
   const handleCategoryChange = (event) => {
     setSelectedCategory(event.target.value);
@@ -232,8 +228,72 @@ const NewProduct = () => {
     setSelectedSubSubcategory("");
   };
   const handleSubSubcategoryChange = (event) => {
+    const selectedSubcategoryValue = event.target.value;
     setSelectedSubSubcategory(event.target.value);
     onChange(event);
+    console.log("selectedCategory:", selectedCategory);
+    console.log("selectedSubcategory:", selectedSubcategory);
+    console.log("selectedSubcategory:", selectedSubcategoryValue);
+    console.log(
+      "subsubcategories[selectedSubcategory]:",
+      subsubcategories[selectedSubcategory]
+    );
+  };
+
+  const [isAddNewOpen, setIsAddNewOpen] = useState(false);
+
+  const handleAddNewToggle = () => {
+    setIsAddNewOpen(!isAddNewOpen);
+  };
+
+  const handleSaveNew = () => {
+    console.log("newCategory:", newCategory);
+    console.log("newSection:", newSection);
+    console.log("newSubSection:", newSubSection);
+    console.log("categories:", categories);
+    console.log("subcategories:", subcategories);
+    console.log("subsubcategories:", subsubcategories);
+    if (newCategory.trim() !== "") {
+      console.log("categories", categories);
+      if (!categories.includes(newCategory)) {
+        setCategories([...categories, newCategory]);
+      }
+    }
+
+    if (newCategory.trim() !== "" && newSection.trim() !== "") {
+      if (!subcategories[newCategory]) {
+        setSubcategories({
+          ...subcategories,
+          [newCategory]: [],
+        });
+      }
+      if (!subcategories[newCategory].includes(newSection)) {
+        setSubcategories({
+          ...subcategories,
+          [newCategory]: [...subcategories[newCategory], newSection],
+        });
+      }
+    }
+
+    if (newSection.trim() !== "" && newSubSection.trim() !== "") {
+      if (!subsubcategories[newSection]) {
+        setSubsubcategories({
+          ...subsubcategories,
+          [newSection]: [],
+        });
+      }
+      if (!subsubcategories[newSection].includes(newSubSection)) {
+        setSubsubcategories({
+          ...subsubcategories,
+          [newSection]: [...subsubcategories[newSection], newSubSection],
+        });
+      }
+    }
+
+    setNewCategory("");
+    setNewSection("");
+    setNewSubSection("");
+    setIsAddNewOpen(false);
   };
 
   return (
@@ -254,10 +314,20 @@ const NewProduct = () => {
           onChange={onChange}
           className="bg-slate-200 px-2 py-1 my-1"
         />
+        <div className="flex justify-start items-center gap-[250px] my-2">
+          <label htmlFor="category" className="mt-1">
+            Category:
+          </label>
 
-        <label htmlFor="category" className="mt-1">
-          Category:
-        </label>
+          <NavLink
+            onClick={handleAddNewToggle}
+            className="bg-cyan-500 rounded-md px-2 text-white "
+          >
+            {" "}
+            add new
+          </NavLink>
+        </div>
+
         <select
           name="category"
           id="category"
@@ -270,7 +340,7 @@ const NewProduct = () => {
           </option>
           {categories.map((category) => (
             <option name="category" value={category}>
-             Category :   {category}
+              Category : {category}
             </option>
           ))}
         </select>
@@ -298,7 +368,7 @@ const NewProduct = () => {
         </select>
 
         <label htmlFor="sub_sub_category" className="mt-1">
-        Sub-section :
+          Sub-section :
         </label>
         <select
           name="sub_sub_category"
@@ -407,20 +477,31 @@ const NewProduct = () => {
             className="bg-slate-200 p-4 rounded-lg shadow-md flex flex-col justify-start items-start "
           >
             <div className="w-full flex justify-center items-center mb-4">
-              <div className="w-50 h-40  overflow-hidden">
+              <div className="w-50 h-40  overflow-hidden backdrop-blur-md">
                 <img
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover border border-black"
                   src={product.image}
                   alt="no internet"
                 />
               </div>
             </div>
 
-            <p className="text-xl font-semibold my-1">{product.product_name}</p>
+            <p className="text-xl font-semibold my-1 max-w-[200px]  break-words">
+              {product.product_name}
+            </p>
 
-            <p className="text-gray-500 my-1"><p className="text-black">Category</p>{product.category}</p>
-            <p className="text-gray-500 my-1"><p className="text-black">Section</p>{product.sub_category}</p>
-            <p className="text-gray-500 my-1"><p className="text-black">Sub-section</p>{product.sub_sub_category}</p>
+            <p className="text-gray-500 my-1">
+              <p className="text-black">Category</p>
+              {product.category}
+            </p>
+            <p className="text-gray-500 my-1">
+              <p className="text-black">Section</p>
+              {product.sub_category}
+            </p>
+            <p className="text-gray-500 my-1">
+              <p className="text-black">Sub-section</p>
+              {product.sub_sub_category}
+            </p>
 
             <div className="flex justify-start items-center gap-4 my-1">
               <p className="text-xl font-semibold text-red-500">
@@ -474,6 +555,61 @@ const NewProduct = () => {
           // Pass product ID to Modal component
         />
       )}
+      <AnimatePresence>
+        {isAddNewOpen && (
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 20 }}
+            className="fixed top-0 right-0 bottom-0 bg-black bg-opacity-50 flex items-center"
+          >
+            <div className="bg-white w-96 p-4 rounded-lg shadow-lg">
+              <label htmlFor="newCategory" className="mt-1">
+                New Category:
+              </label>
+              <input
+                type="text"
+                id="newCategory"
+                value={newCategory}
+                onChange={(e) => setNewCategory(e.target.value)}
+                className="bg-slate-200 px-2 py-1 my-1"
+              />
+              <label htmlFor="newSection" className="mt-1">
+                New Section:
+              </label>
+              <input
+                type="text"
+                id="newSection"
+                value={newSection}
+                onChange={(e) => setNewSection(e.target.value)}
+                className="bg-slate-200 px-2 py-1 my-1"
+              />
+              <label htmlFor="newSubSection" className="mt-1">
+                New Sub-section:
+              </label>
+              <input
+                type="text"
+                id="newSubSection"
+                value={newSubSection}
+                onChange={(e) => setNewSubSection(e.target.value)}
+                className="bg-slate-200 px-2 py-1 my-1"
+              />
+              <button
+                className="bg-red-500 text-white px-4 py-2 mt-2 mx-2 rounded"
+                onClick={handleAddNewToggle}
+              >
+                Close
+              </button>
+              <button
+                className="bg-blue-500 text-white px-4 py-2 mt-2 rounded"
+                onClick={handleSaveNew}
+              >
+                Save
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

@@ -13,6 +13,7 @@ import { setDataProduct } from './Redux/productSlice';
 import api from './utils/api';
 import ProductList from './Component/Productlist'
 import Modal from './Component/Modal'
+import Category from './Component/Category';
 
 
 
@@ -53,6 +54,7 @@ function App() {
            
             <Route exact path='/productlist' element={<ProductList />} />
             <Route exact path='/updateMenu' element={<Modal />} />
+            <Route exact path='/category' element={<Category />} />
             
             
           </Routes>
