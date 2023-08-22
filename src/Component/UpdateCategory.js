@@ -1,37 +1,39 @@
 import React, { useState } from "react";
 import { useDispatch } from "react-redux";
-import { addCategory } from "../Redux/categorySlice"; // Import your Redux action
+import { updateCategoryName } from "../Redux/categorySlice"; // Import your Redux action
 import api from "../utils/api";
 import { NavLink } from "react-router-dom";
 import axios from "axios";
 import { toast } from "react-hot-toast";
 
-const AddCategory = ({ onClose }) => {
+const UpdateCategory = ({ categoryId, onClose }) => {
   const dispatch = useDispatch();
   const [newCategoryName, setNewCategoryName] = useState("");
 
-  const handleAddCategory = async () => {
+  const handleUpdateCategory = async () => {
     try {
-      const response = await axios.post(`${api}/api/category/categories`, {
+      const response = await axios.put(`${api}/api/category/updateCategory/${categoryId}`, {
         name: newCategoryName,
+      
       });
 
-      // Add the new category to Redux store
-      toast.success("Category added successfully");
-      dispatch(addCategory({ _id: response.data._id, name: newCategoryName }));
+      // Update Redux store with the new category name
+      toast.success("category updated successfully");
+      dispatch(updateCategoryName({ categoryId, newName: newCategoryName }));
 
-      // Close the modal or perform any other action after adding
+      // Close the modal or perform any other action after update
       onClose();
-      // window.location.reload();
+      window.location.reload();
     } catch (error) {
-      console.error("Error adding category:", error);
+      console.error("Error updating category name:", error);
     }
   };
+
 
   return (
     <div className="fixed inset-0 flex items-center justify-center">
       <div className="bg-white w-96 p-6 rounded-lg shadow-lg">
-        <h2 className="text-xl font-semibold mb-4">Add New Category</h2>
+        <h2 className="text-xl font-semibold mb-4">Update Category Name</h2>
         <input
           type="text"
           placeholder="New Category Name"
@@ -41,21 +43,22 @@ const AddCategory = ({ onClose }) => {
         />
         <div className="flex justify-end mt-4">
           <NavLink
-            onClick={handleAddCategory}
+            onClick={handleUpdateCategory}
             className="bg-blue-500 text-white px-4 py-2 rounded mr-2"
           >
-            Add
+            Update
           </NavLink>
-          <NavLink
+          <button
             onClick={onClose}
             className="bg-gray-300 text-gray-700 px-4 py-2 rounded"
           >
             Cancel
-          </NavLink>
+          </button>
         </div>
       </div>
     </div>
   );
 };
 
-export default AddCategory;
+export default UpdateCategory;
+

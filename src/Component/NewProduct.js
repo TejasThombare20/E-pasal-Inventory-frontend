@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { FaUpload } from "react-icons/fa";
 import { imageToBase64 } from "../Utility/ImageToBase64";
 import axios from "axios";
@@ -8,11 +8,41 @@ import api from "../utils/api";
 import Modal from "../Component/Modal";
 import { useNavigate, NavLink } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
+import { setCategory } from "../Redux/categorySlice";
+import UpdateCategory from "./UpdateCategory";
+import Category from "./Category";
+import UpdateSection from "./UpdateSection";
+import UpdateSubsection from "./UpdateSubsection";
+import { FcDeleteDatabase } from "react-icons/fc";
+import { FcEditImage } from "react-icons/fc";
+import ProductItem from "./ProductItem";
+import Select from "react-select";
+import { fetchUnits } from "../frontendAPI";
+import UpdateUnit from "./UpdateUnit";
+import { setDataProduct } from "../Redux/productSlice";
+import NewSection from "./NewSection";
+import NewSubsection from "./NewSubsection";
+import NewUnit from "./NewUnit";
+import { FiEdit } from "react-icons/fi";
+import { MdDelete } from "react-icons/md";
+import NewCategory from "./NewCategory";
 
-const NewProduct = () => {
+const NewProduct = ({ accessToken }) => {
+  const dispatch = useDispatch();
   const productData = useSelector((state) => state.product.productList);
-  const reversedProductData = [...productData].reverse();
-  // console.log("productData", productData);
+  console.log("productData", productData);
+
+  const CategoryData = useSelector((state) => state.category.categories);
+  console.log("CategoryData", CategoryData);
+
+  const [selectedCategory, setSelectedCategory] = useState(""); // Add this line
+
+  const [sectionsForSelectedCategory, setSectionsForSelectedCategory] =
+    useState([]);
+  const [subsectionsForSelectedSection, setSubsectionsForSelectedSection] =
+    useState([]);
+  const [selectedSubcategory, setSelectedSubcategory] = useState("");
+  const [selectedSubsection, setSelectedSubsection] = useState(""); // Add this line
   const [data, setdata] = useState({
     product_name: "",
     category: "",
@@ -26,6 +56,7 @@ const NewProduct = () => {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedProductId, setSelectedProductId] = useState(null);
+
   const handleUpdateClick = (product) => {
     // console.log("product ", product);
     setSelectedProductId(product); // Step 2
@@ -33,13 +64,12 @@ const NewProduct = () => {
   };
 
   const uploadImage = async (e) => {
-    const data1 = await imageToBase64(e.target.files[0]);
-    // console.log(data1);
+    const imageUrl = URL.createObjectURL(e.target.files[0]);
 
     setdata((preve) => {
       return {
         ...preve,
-        image: data1,
+        image: imageUrl,
       };
     });
   };
@@ -54,15 +84,74 @@ const NewProduct = () => {
     }
   };
 
-  const onChange = async (e) => {
-    const { name, value } = e.target;
-    setdata((preve) => {
-      return {
-        ...preve,
-        [name]: value,
-      };
-    });
+  function convertDriveLinkToDirectLink(driveLink) {
+    const fileIdMatch = driveLink.match(/\/d\/([a-zA-Z0-9_-]+)\//);
+    if (fileIdMatch && fileIdMatch[1]) {
+      const fileId = fileIdMatch[1];
+      return `https://drive.google.com/uc?export=view&id=${fileId}`;
+    } else {
+      return driveLink;
+    }
+  }
+  const onChange = (name, selectedValue) => {
+
+    console.log("Selected value:", selectedValue);
+    if (name === "category") {
+      const selectedCategoryData = CategoryData.find(
+        (category) => category._id === selectedValue
+      );
+      setSelectedCategory(selectedValue);
+      setdata((prevData) => ({
+        ...prevData,
+        category: selectedCategoryData?.name || "",
+        sub_category: "", // Reset sub-category when category changes
+        sub_sub_category: "", // Reset sub-sub-category when category changes
+      }));
+      const sectionsForSelectedCategory = selectedCategoryData?.sections || [];
+      setSectionsForSelectedCategory(sectionsForSelectedCategory);
+      setSelectedSubcategory("");
+      setSelectedSubsection("");
+    } else if (name === "sub_category") {
+      const selectedSectionData = sectionsForSelectedCategory.find(
+        (section) => section._id === selectedValue
+      );
+      setSelectedSubcategory(selectedValue);
+      setdata((prevData) => ({
+        ...prevData,
+        sub_category: selectedSectionData?.name || "",
+        sub_sub_category: "", // Reset sub-sub-category when sub-category changes
+      }));
+      const subsectionsForSelectedSection =
+        selectedSectionData?.subsections || [];
+      setSubsectionsForSelectedSection(subsectionsForSelectedSection);
+    } else if (name === "sub_sub_category") {
+      const selectedSubsectionValue = selectedValue.value;
+      console.log("selectedValue",selectedValue)
+      
+      const selectedSubsectionIndex = CategoryData.find(
+        (category) => category._id === selectedCategory
+      )
+        .sections.find((section) => section._id === selectedSubcategory)
+        .subsections.indexOf(selectedSubsectionValue);
+      setSelectedSubsection(selectedSubsectionIndex);
+      setdata((prevData) => ({
+        ...prevData,
+        sub_sub_category: selectedValue,
+      }));
+    } else if (name === "image") {
+      const convertedImageLink = convertDriveLinkToDirectLink(selectedValue);
+      setdata((prevData) => ({
+        ...prevData,
+        [name]: convertedImageLink,
+      }));
+    } else {
+      setdata((prevData) => ({
+        ...prevData,
+        [name]: selectedValue,
+      }));
+    }
   };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     const {
@@ -75,30 +164,43 @@ const NewProduct = () => {
       image,
       price,
     } = data;
-    // console.log("data", data);
-    const response = await axios.post(
-      `${api}/api/product/addProduct`,
-      JSON.stringify({
-        product_name,
-        category,
-        sub_category,
-        sub_sub_category,
-        description,
-        quantity,
-        image,
-        price,
-      }),
-      {
-        headers: {
-          Accept: "*/*",
-          "Content-Type": "application/json",
-        },
+
+    try {
+      const response = await axios.post(
+        `${api}/api/product/addProduct`,
+        JSON.stringify({
+          product_name,
+          category,
+          sub_category,
+          sub_sub_category,
+          description,
+          quantity,
+          image,
+          price,
+        }),
+        {
+          headers: {
+            Accept: "*/*",
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      // If the product is added successfully, update the Redux store
+      if (response.status === 200) {
+        const newProduct = response.data; // Assuming the response returns the newly added product
+        dispatch(setDataProduct([...productData, newProduct])); // Add the new product to the Redux store
+
+        toast("Product added successfully");
+        setTimeout(() => {
+          window.location.reload();
+        }, 500);
+      } else {
+        console.log("Unexpected response:", response.status, response.data);
       }
-    );
-    toast("product added successfully");
-    setTimeout(() => {
-      window.location.reload();
-    }, 500);
+    } catch (error) {
+      console.error("Error adding product:", error.message);
+    }
   };
 
   const deleteProduct = async (productID, e) => {
@@ -126,175 +228,234 @@ const NewProduct = () => {
       }
     }
   };
+  const [addCategoryOpen, setAddCategoryOpen] = useState(false);
 
-  const [categories, setCategories] = useState([
-    "Groceries",
-    "Bakery and Dairy",
-    "Egg and Meat",
-    "Beverages",
-    "Packaged Foods",
-  ]);
-  const [subcategories, setSubcategories] = useState({
-    "Groceries": [
-      "Rice & Rice Products",
-      "Atta, Flour & Suji",
-      "Cooking Oil & Ghee",
-      "Dal & Pulses",
-    ],
-    "Bakery and Dairy": [
-      "Bread and Croissants",
-      "Dairy",
-      "Home Making",
-      "Icecream & Desserts",
-      "Muffins & Cookies",
-    ],
-    "Egg and Meat": [
-      "Eggs",
-      "Frozen Meet",
-      "Frozen Snacks",
-      "Sausage Ham & Salami",
-    ],
-    "Beverages": [
-      "Cocktail Mixes",
-      "Coffee",
-      "Energy And Health drinks",
-      "Fruit Juice and Drinks",
-      "Soft drinks",
-      "Tea",
-      "Water",
-      "Alcohol",
-    ],
-    "Packaged Foods": [
-      "Biscuits & Cookies",
-      "Breakfast Cereals",
-      " Canned & Processed food",
-      "Chocolates and Candies",
-      "Frozen Meal & snacks",
-      "Noodles & Pasta",
-      "Pickles & Chutney",
-      "Ready to cook Mixes",
-      "Snacks",
-      "Spreads, Sauce & Ketchup",
-    ],
-  });
-  const [subsubcategories, setSubsubcategories] = useState({
-    "Rice & Rice Products": [
-      "Beaten Rice",
-      "Boiled Rice",
-      "Brown Rice",
-      "Jeera Masino Rice",
-      "Long Grain rice",
-      "Premium Basmati rice",
-      "Sona Mansuli Rice",
-      "Premium Rice from Nepal",
-      "Other Rice Products	",
-    ],
-    "Atta, Flour & Suji": ["Atta", "Besan & Suji", " Maida", "Other Flours"],
-
-    "Cooking Oil & Ghee": [
-      "Corn oil & others",
-      "Ghee",
-      "Olive oil",
-      "Sunflower cooking oil",
-      "Soya & Mustard oil",
-    ],
-    "Dairy": [
-      "Butter",
-      "Cheese & Tofu",
-      "Creamer & Whitener",
-      "Milk & Milk Products",
-    ],
-
-    // Add more sub-subcategories here
-  });
-  const [selectedCategory, setSelectedCategory] = useState("");
-  const [selectedSubcategory, setSelectedSubcategory] = useState("");
-  const [selectedSubSubcategory, setSelectedSubSubcategory] = useState("");
-
-  const [newCategory, setNewCategory] = useState("");
-  const [newSection, setNewSection] = useState("");
-  const [newSubSection, setNewSubSection] = useState("");
-
-  const handleCategoryChange = (event) => {
-    setSelectedCategory(event.target.value);
-    onChange(event);
-    setSelectedSubcategory("");
-    setSelectedSubSubcategory("");
+  const addCategoryButton = () => {
+    console.log("Add category open");
+    setAddCategoryOpen(true); // Toggle the state
   };
 
-  const handleSubcategoryChange = (event) => {
-    setSelectedSubcategory(event.target.value);
-    onChange(event);
-    setSelectedSubSubcategory("");
+  // for updation of the category
+  const [isUpdateCategoryModalOpen, setIsUpdateCategoryModalOpen] =
+    useState(false);
+  const [selectedCategoryForUpdate, setSelectedCategoryForUpdate] =
+    useState(null);
+
+  const handleUpdateCategoryClick = (categoryId) => {
+    console.log("categoryId : ", categoryId);
+
+    setSelectedCategoryForUpdate(categoryId);
+    setIsUpdateCategoryModalOpen(true);
   };
-  const handleSubSubcategoryChange = (event) => {
-    const selectedSubcategoryValue = event.target.value;
-    setSelectedSubSubcategory(event.target.value);
-    onChange(event);
-    console.log("selectedCategory:", selectedCategory);
-    console.log("selectedSubcategory:", selectedSubcategory);
-    console.log("selectedSubcategory:", selectedSubcategoryValue);
-    console.log(
-      "subsubcategories[selectedSubcategory]:",
-      subsubcategories[selectedSubcategory]
+
+  // for updation of the section
+
+  const [selectedSectionForUpdate, setSelectedSectionForUpdate] =
+    useState(null); // Add this line
+  const [isUpdateSectionModalOpen, setIsUpdateSectionModalOpen] =
+    useState(false); // Add this line
+
+  const [selectedUpdateSection, setSelectedUpdateSection] = useState({
+    sectionId: null,
+    categoryId: null,
+  });
+
+  const handleUpdateSectionClick = (sectionId) => {
+    const selectedSection = sectionsForSelectedCategory.find(
+      (section) => section._id === sectionId
     );
+
+    if (selectedSection) {
+      setSelectedUpdateSection({
+        sectionId,
+        categoryId: selectedCategory,
+      });
+      setIsUpdateSectionModalOpen(true);
+    }
   };
 
-  const [isAddNewOpen, setIsAddNewOpen] = useState(false);
+  // for updation of subsection
 
-  const handleAddNewToggle = () => {
-    setIsAddNewOpen(!isAddNewOpen);
+  const [isUpdateSubsectionModalOpen, setIsUpdateSubsectionModalOpen] =
+    useState(false);
+  const [selectedUpdateSubsection, setSelectedUpdateSubsection] = useState({
+    categoryId: null,
+    sectionId: null,
+    subsectionIndex: null,
+  });
+  const handleUpdateSubsectionClick = (
+    categoryId,
+    sectionId,
+    subsectionIndex
+  ) => {
+    console.log("subsectionIndex", subsectionIndex);
+    // Open the UpdateSubsection modal and pass the data as props
+    setIsUpdateSubsectionModalOpen(true);
+    setSelectedUpdateSubsection({
+      categoryId,
+      sectionId,
+      subsectionIndex: sectionsForSelectedCategory
+        .find((section) => section._id === sectionId)
+        .subsections.indexOf(subsectionIndex), // Get the index of the subsection
+    });
   };
 
-  const handleSaveNew = () => {
-    console.log("newCategory:", newCategory);
-    console.log("newSection:", newSection);
-    console.log("newSubSection:", newSubSection);
-    console.log("categories:", categories);
-    console.log("subcategories:", subcategories);
-    console.log("subsubcategories:", subsubcategories);
-    if (newCategory.trim() !== "") {
-      console.log("categories", categories);
-      if (!categories.includes(newCategory)) {
-        setCategories([...categories, newCategory]);
+  // delete the category
+  const deleteCategory = async (categoryId) => {
+    const confirmDelete = window.confirm(
+      "Are you sure you want to delete this category?"
+    );
+    if (confirmDelete) {
+      try {
+        const response = await axios.delete(
+          `${api}/api/category/categories/${categoryId}`
+        );
+        if (response.status === 200) {
+          toast("Category deleted successfully");
+          window.location.reload();
+          // You might want to refresh the data or update the Redux state after deletion
+        } else {
+          console.log("Unexpected response:", response.status, response.data);
+        }
+      } catch (error) {
+        console.error("Error deleting category:", error.message);
       }
     }
-
-    if (newCategory.trim() !== "" && newSection.trim() !== "") {
-      if (!subcategories[newCategory]) {
-        setSubcategories({
-          ...subcategories,
-          [newCategory]: [],
-        });
-      }
-      if (!subcategories[newCategory].includes(newSection)) {
-        setSubcategories({
-          ...subcategories,
-          [newCategory]: [...subcategories[newCategory], newSection],
-        });
-      }
-    }
-
-    if (newSection.trim() !== "" && newSubSection.trim() !== "") {
-      if (!subsubcategories[newSection]) {
-        setSubsubcategories({
-          ...subsubcategories,
-          [newSection]: [],
-        });
-      }
-      if (!subsubcategories[newSection].includes(newSubSection)) {
-        setSubsubcategories({
-          ...subsubcategories,
-          [newSection]: [...subsubcategories[newSection], newSubSection],
-        });
-      }
-    }
-
-    setNewCategory("");
-    setNewSection("");
-    setNewSubSection("");
-    setIsAddNewOpen(false);
   };
+  // deletion of the section
+  const deleteSection = async (categoryId, sectionId) => {
+    const confirmDelete = window.confirm(
+      "Are you sure you want to delete this section?"
+    );
+    if (confirmDelete) {
+      try {
+        const response = await axios.delete(
+          `${api}/api/category/${categoryId}/sections/${sectionId}`
+        );
+        if (response.status === 200) {
+          toast("Section deleted successfully");
+          window.location.reload();
+          // You might want to refresh the data or update the Redux state after deletion
+        } else {
+          console.log("Unexpected response:", response.status, response.data);
+        }
+      } catch (error) {
+        console.error("Error deleting section:", error.message);
+      }
+    }
+  };
+
+  //  deletion of the subsection
+
+  const deleteSubsection = async (categoryId, sectionId, subsectionIndex) => {
+    console.log("subsectionIndex", subsectionIndex);
+    const confirmDelete = window.confirm(
+      "Are you sure you want to delete this subsection?"
+    );
+    if (confirmDelete) {
+      try {
+        const response = await axios.delete(
+          `${api}/api/category/${categoryId}/sections/${sectionId}/subsections/${subsectionIndex}`
+        );
+        if (response.status === 200) {
+          toast("Subsection deleted successfully");
+          // You might want to refresh the data or update the Redux state after deletion
+        } else {
+          console.log("Unexpected response:", response.status, response.data);
+        }
+      } catch (error) {
+        console.error("Error deleting subsection:", error.message);
+      }
+    }
+  };
+
+  const [units, setUnits] = useState([]);
+
+  useEffect(() => {
+    async function fetchUnitsData() {
+      const unitsData = await fetchUnits();
+      setUnits(unitsData);
+    }
+    fetchUnitsData();
+  }, []);
+
+  const [selectedUnitForUpdate, setSelectedUnitForUpdate] = useState(null);
+  const handleUpdateUnitClick = (unitId) => {
+    const selectedUnit = units.find((unit) => unit._id === unitId);
+    setSelectedUnitForUpdate(selectedUnit);
+  };
+  const handleUnitUpdate = (unitId, newName) => {
+    // Update the units list with the new unit name
+    const updatedUnits = units.map((unit) =>
+      unit._id === unitId ? { ...unit, name: newName } : unit
+    );
+    setUnits(updatedUnits);
+  };
+
+  const handleDeleteUnitClick = async (unitId) => {
+    const confirmDelete = window.confirm(
+      "Are you sure you want to delete this unit?"
+    );
+    if (confirmDelete) {
+      try {
+        const response = await axios.delete(
+          `${api}/api/unit/deleteUnit/${unitId}`
+        );
+        if (response.status === 200) {
+          toast("Unit deleted successfully");
+        } else {
+          console.log("Unexpected response:", response.status, response.data);
+        }
+      } catch (error) {
+        console.error("Error deleting unit:", error.message);
+      }
+    }
+  };
+
+  const [isAddSectionModalOpen, setIsAddSectionModalOpen] = useState(false);
+  const [isAddSubsectionOpen, setIsAddSubsectionOpen] = useState(false);
+  const handleAddSubsectionClick = () => {
+    setIsAddSubsectionOpen(true);
+  };
+
+  const handleAddSubsectionClose = () => {
+    setIsAddSubsectionOpen(false);
+  };
+
+  // add new unit
+  const [isAddUnitOpen, setIsAddUnitOpen] = useState(false);
+
+  const handleAddUnitClick = () => {
+    setIsAddUnitOpen(true);
+  };
+
+  const handleCloseAddUnit = () => {
+    setIsAddUnitOpen(false);
+  };
+
+  // const [driveImageLink, setDriveImageLink] = useState("");
+
+  // const handleImageUpload = async () => {
+  //   const formData = new FormData();
+  //   formData.append("image", image);
+
+  //   try {
+  //     await axios.post(
+  //       `${api}/api/uploadimage/upload`,
+  //       formData,
+  //       {
+  //         headers: {
+  //           "Content-Type": "multipart/form-data",
+  //           Authorization: `Bearer ${accessToken}`,
+  //         },
+  //       }
+  //     );
+
+  //     // Handle success
+  //   } catch (error) {
+  //     console.log(error)
+  //   }
+  // }
 
   return (
     <div className="  p-4 ">
@@ -311,86 +472,216 @@ const NewProduct = () => {
           type="text"
           name="product_name"
           value={data.product_name}
-          onChange={onChange}
+          onChange={(e) => onChange("product_name", e.target.value)}
           className="bg-slate-200 px-2 py-1 my-1"
         />
-        <div className="flex justify-start items-center gap-[250px] my-2">
+
+        {/* Category Dropdown */}
+        <div className="my-1 flex justify-start items-center gap-52">
           <label htmlFor="category" className="mt-1">
             Category:
           </label>
-
           <NavLink
-            onClick={handleAddNewToggle}
-            className="bg-cyan-500 rounded-md px-2 text-white "
+            to="#"
+            className="bg-blue-500 rounded-md text-white text-sm px-2 py-1"
+            onClick={addCategoryButton} 
           >
-            {" "}
-            add new
+            Add new
           </NavLink>
         </div>
+        {addCategoryOpen && <Category onClose={() => setAddCategoryOpen(false)} />}
+        <Select
+          options={CategoryData.map((category) => ({
+            value: category._id,
+            label: (
+              <div className="flex items-center justify-between">
+                {category.name}
+                <div className="flex gap-2">
+                  <NavLink
+                    className="bg-green-400 text-sm text-white px-2 py-1 rounded"
+                    onClick={() => handleUpdateCategoryClick(category._id)}
+                  >
+                    <FiEdit size={15} />
+                  </NavLink>
+                  <NavLink
+                    className="bg-red-500  text-sm text-white px-2 py-1 rounded"
+                    onClick={() => deleteCategory(category._id)}
+                  >
+                    <MdDelete size={15} />
+                  </NavLink>
+                </div>
+              </div>
+            ),
+          }))}
+          onChange={(selectedOption) =>
+            onChange("category", selectedOption.value)
+          }
+        />
+        {isUpdateCategoryModalOpen && (
+          <UpdateCategory
+            categoryId={selectedCategoryForUpdate}
+            onClose={() => setIsUpdateCategoryModalOpen(false)}
+          />
+        )}
 
-        <select
-          name="category"
-          id="category"
-          value={selectedCategory}
-          onChange={handleCategoryChange}
-          className="bg-slate-200 px-2 py-1 my-1"
-        >
-          <option disabled selected value="">
-            Select an category
-          </option>
-          {categories.map((category) => (
-            <option name="category" value={category}>
-              Category : {category}
-            </option>
-          ))}
-        </select>
+        <div className="my-1 flex justify-start items-center gap-52">
+          <label htmlFor="sub_categorty" className="mt-1">
+            Section :
+          </label>
+          {selectedCategory && (
+            <NavLink
+              to="#"
+              className="bg-blue-500 rounded-md text-white text-sm px-2 py-1"
+              onClick={() => setIsAddSectionModalOpen(true)}
+            >
+              Add new
+            </NavLink>
+          )}
+        </div>
+        {isAddSectionModalOpen && (
+          <NewSection
+            categoryId={selectedCategory} // Pass the selected category ID
+            onClose={() => setIsAddSectionModalOpen(false)}
+          />
+        )}
 
-        <label htmlFor="sub_category" className="mt-1">
-          Section:
-        </label>
-        <select
-          name="sub_category"
-          id="sub_category"
-          value={selectedSubcategory}
-          onChange={handleSubcategoryChange}
-          disabled={!selectedCategory}
-          className="bg-slate-200 px-2 py-1 my-1"
-        >
-          <option disabled selected value="">
-            Select an section
-          </option>
-          {subcategories[selectedCategory] &&
-            subcategories[selectedCategory].map((subcategory) => (
-              <option name="sub_category" value={subcategory}>
-                {subcategory}
-              </option>
-            ))}
-        </select>
+        <Select
+          options={sectionsForSelectedCategory.map((section) => ({
+            value: section._id,
+            label: (
+              <div className="flex items-center justify-between">
+                {section.name}
+                <div className="flex gap-2">
+                  <NavLink
+                    className="bg-green-400 text-white px-2 py-1 rounded"
+                    onClick={() => handleUpdateSectionClick(section._id)}
+                  >
+                    <FiEdit size={15} />
+                  </NavLink>
+                  <NavLink
+                    className="bg-red-500 text-white px-2 py-1 rounded"
+                    onClick={() => deleteSection(selectedCategory, section._id)}
+                  >
+                    <MdDelete size={15} />
+                  </NavLink>
+                </div>
+              </div>
+            ),
+          }))}
+          onChange={(selectedOption) =>
+            onChange("sub_category", selectedOption.value)
+          }
+          isDisabled={!selectedCategory} // Disable the dropdown if no category is selected
+        />
 
-        <label htmlFor="sub_sub_category" className="mt-1">
-          Sub-section :
-        </label>
-        <select
-          name="sub_sub_category"
-          id="sub_sub_category"
-          value={selectedSubSubcategory}
-          onChange={handleSubSubcategoryChange}
-          disabled={!selectedSubcategory}
-          className="bg-slate-200 px-2 py-1 my-1"
-        >
-          <option disabled selected value="">
-            Select an sub-section
-          </option>
-          {selectedSubcategory &&
-            subsubcategories[selectedSubcategory] &&
-            subsubcategories[selectedSubcategory].map((subsubcategory) => (
-              <option name="sub_sub_category" value={subsubcategory}>
-                {subsubcategory}
-              </option>
-            ))}
-        </select>
+        {/* Update Section NavLink */}
+
+        {isUpdateSectionModalOpen && (
+          <UpdateSection
+            sectionId={selectedUpdateSection.sectionId}
+            categoryId={selectedUpdateSection.categoryId}
+            onClose={() => setIsUpdateSectionModalOpen(false)}
+          />
+        )}
+
+        <div className="my-1 flex justify-start items-center gap-52">
+          <label htmlFor="sub_sub_category" className="mt-1">
+            Subsection :
+          </label>
+          {selectedSubcategory && (
+            <NavLink
+              to="#"
+              className="bg-blue-500 rounded-md text-white text-sm px-2 py-1"
+              onClick={handleAddSubsectionClick}
+            >
+              Add new
+            </NavLink>
+          )}
+        </div>
+        {isAddSubsectionOpen && (
+          <NewSubsection
+            onClose={handleAddSubsectionClose}
+            selectedSection={selectedSubcategory}
+            selectedCategory={selectedCategory}
+            // Pass any necessary props to the AddSubsection component
+          />
+        )}
+
+        <Select
+          options={
+            selectedSubcategory
+              ? sectionsForSelectedCategory
+                  .find((section) => section._id === selectedSubcategory)
+                  .subsections.map((subsection, index) => ({
+                    value: subsection,
+                    label: (
+                      <div className="flex items-center justify-between">
+                        {subsection}
+                        <div className="flex gap-2">
+                          <NavLink
+                            className="bg-green-400 text-white px-2 py-1 rounded"
+                            onClick={() =>
+                              handleUpdateSubsectionClick(
+                                selectedCategory,
+                                selectedSubcategory,
+                                subsection
+                              )
+                            }
+                          >
+                            <FiEdit size={15} />
+                          </NavLink>
+                          <NavLink
+                            className="bg-red-500 text-white px-2 py-1 rounded"
+                            onClick={() => {
+                              deleteSubsection(
+                                selectedCategory,
+                                selectedSubcategory,
+                                index
+                              );
+                            }}
+                          >
+                            <MdDelete size={15} />
+                          </NavLink>
+                        </div>
+                      </div>
+                    ),
+                  }))
+              : []
+          }
+          isDisabled={!selectedSubcategory}
+          onChange={(selectedOption) =>
+            onChange("sub_sub_category", selectedOption.value)
+          }
+        />
+
+        {/* Update Subsection Modal */}
+        {isUpdateSubsectionModalOpen && (
+          <UpdateSubsection
+            categoryId={selectedUpdateSubsection.categoryId}
+            sectionId={selectedUpdateSubsection.sectionId}
+            subsectionIndex={selectedUpdateSubsection.subsectionIndex}
+            onClose={() => setIsUpdateSubsectionModalOpen(false)}
+          />
+        )}
 
         <label htmlFor="image" className="mt-1 cursor-pointer">
+          Image Link
+        </label>
+        <input
+          type="text"
+          name="image"
+          id="image"
+          value={data.image}
+          onChange={(e) => onChange("image", e.target.value)}
+          className="bg-slate-200 px-2 py-1 my-1"
+        />
+        {data.image && (
+          <div className="h-40 w-full bg-slate-200  my-1 py-1 flex items-center justify-center">
+            <img src={data.image} className="h-full" alt="productImage" />
+          </div>
+        )}
+
+        {/* <label htmlFor="image" className="mt-1 cursor-pointer">
           Image :
           <div className="h-40 w-full bg-slate-200  my-1 py-1 flex items-center justify-center">
             {data.image ? (
@@ -405,11 +696,12 @@ const NewProduct = () => {
               type="file"
               accept="image/*"
               id="image"
-              onChange={uploadImage}
+              onChange={(e) => setImage(e.target.files[0])}
               className="hidden"
             />
+            <NavLink onClick={handleImageUpload}>Upload</NavLink>
           </div>
-        </label>
+        </label> */}
 
         <label htmlFor="price" className="mt-1">
           Price :
@@ -419,32 +711,58 @@ const NewProduct = () => {
           name="price"
           id="price"
           value={data.price}
-          onChange={onChange}
+          onChange={(e) => onChange("price", e.target.value)}
           className="bg-slate-200 px-2 py-1 my-1"
         />
-        <label htmlFor="quantity" className="mt-1">
-          Quantity :
-        </label>
-        <select
-          name="quantity"
-          id="quantity"
-          onChange={onChange}
-          placeholder="choose Quantity"
-          className="bg-slate-200 px-2 py-1 my-1"
-        >
-          <option disabled selected value="">
-            Select an quantity type
-          </option>
-          <option name="quantity" value={" per piece"}>
-            per piece
-          </option>
-          <option name="quantity" value={" per box"}>
-            per box
-          </option>
-          <option name="quantity" value={"per KG"}>
-            per KG
-          </option>
-        </select>
+
+        <div className="flex justify-start items-center gap-52 my-2">
+          <label htmlFor="quantity" className="mt-1">
+            Unit :
+          </label>
+          <NavLink
+            className="bg-blue-500 text-sm text-white px-2 py-1 rounded-md"
+            onClick={handleAddUnitClick}
+          >
+            Add Unit
+          </NavLink>
+        </div>
+        {isAddUnitOpen && <NewUnit onClose={handleCloseAddUnit} />}
+
+        {selectedUnitForUpdate && (
+          <UpdateUnit
+            unitId={selectedUnitForUpdate._id}
+            onClose={() => setSelectedUnitForUpdate(null)}
+            updateUnitCallback={handleUnitUpdate}
+          />
+        )}
+
+        <Select
+          options={units.map((unit) => ({
+            value: unit._id,
+            label: (
+              <div className="flex items-center justify-between">
+                {unit.name}
+                <div className="flex gap-2">
+                  <NavLink
+                    className="bg-green-400 text-white px-2 py-1 rounded"
+                    onClick={() => handleUpdateUnitClick(unit._id)}
+                  >
+                    <FiEdit size={15} />
+                  </NavLink>
+                  <NavLink
+                    className="bg-red-500 text-white px-2 py-1 rounded"
+                    onClick={() => handleDeleteUnitClick(unit._id)}
+                  >
+                    <MdDelete size={15} />
+                  </NavLink>
+                </div>
+              </div>
+            ),
+          }))}
+          onChange={(selectedOption) =>
+            onChange("quantity", selectedOption.label.props.children[0])
+          }
+        />
 
         <label htmlFor="description" className="mt-1">
           Description :
@@ -454,7 +772,7 @@ const NewProduct = () => {
           id="description"
           rows="3"
           value={data.description}
-          onChange={onChange}
+          onChange={(e) => onChange("description", e.target.value)}
           className="bg-slate-200 px-2 py-1 my-1 resize-none"
         ></textarea>
 
@@ -471,81 +789,15 @@ const NewProduct = () => {
       <p className="text-3xl font-semibold py-10">Product List : </p>
 
       <div className="flex flex-wrap gap-6 pt-6">
-        {reversedProductData.map((product) => (
-          <div
+        {productData.map((product) => (
+          <ProductItem
             key={product._id}
-            className="bg-slate-200 p-4 rounded-lg shadow-md flex flex-col justify-start items-start "
-          >
-            <div className="w-full flex justify-center items-center mb-4">
-              <div className="w-50 h-40  overflow-hidden backdrop-blur-md">
-                <img
-                  className="w-full h-full object-cover border border-black"
-                  src={product.image}
-                  alt="no internet"
-                />
-              </div>
-            </div>
-
-            <p className="text-xl font-semibold my-1 max-w-[200px]  break-words">
-              {product.product_name}
-            </p>
-
-            <p className="text-gray-500 my-1">
-              <p className="text-black">Category</p>
-              {product.category}
-            </p>
-            <p className="text-gray-500 my-1">
-              <p className="text-black">Section</p>
-              {product.sub_category}
-            </p>
-            <p className="text-gray-500 my-1">
-              <p className="text-black">Sub-section</p>
-              {product.sub_sub_category}
-            </p>
-
-            <div className="flex justify-start items-center gap-4 my-1">
-              <p className="text-xl font-semibold text-red-500">
-                {parseFloat(product.price).toFixed(2)}
-              </p>
-              <p className="text-xl font font-semibold">{product.quantity}</p>
-            </div>
-            <div className="my-1">
-              {expandedProducts.includes(product._id) ? (
-                <div>
-                  <p className="text-gray-600 max-w-xs  break-words ">
-                    {product.description}
-                  </p>
-                  <a
-                    className=" text-blue-600 cursor-pointer  px-4 py-2 mt-2 "
-                    onClick={() => toggleDescription(product._id)}
-                  >
-                    Hide Description
-                  </a>
-                </div>
-              ) : (
-                <a
-                  className="text-blue-600 cursor-pointer  px-4 py-2 mt-2"
-                  onClick={() => toggleDescription(product._id)}
-                >
-                  Show Description
-                </a>
-              )}
-            </div>
-            <div className="my-1">
-              <button
-                className="bg-red-500 text-white px-4 py-2 mt-2 mx-2 rounded"
-                onClick={(e) => deleteProduct(product._id, e)}
-              >
-                Delete
-              </button>
-              <button
-                className="bg-red-500 text-white px-4 py-2 mt-2 rounded"
-                onClick={() => handleUpdateClick(product)}
-              >
-                Edit
-              </button>
-            </div>
-          </div>
+            product={product}
+            expandedProducts={expandedProducts}
+            toggleDescription={toggleDescription}
+            deleteProduct={deleteProduct}
+            handleUpdateClick={handleUpdateClick}
+          />
         ))}
       </div>
       {isModalOpen && (
@@ -555,61 +807,6 @@ const NewProduct = () => {
           // Pass product ID to Modal component
         />
       )}
-      <AnimatePresence>
-        {isAddNewOpen && (
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 20 }}
-            className="fixed top-0 right-0 bottom-0 bg-black bg-opacity-50 flex items-center"
-          >
-            <div className="bg-white w-96 p-4 rounded-lg shadow-lg">
-              <label htmlFor="newCategory" className="mt-1">
-                New Category:
-              </label>
-              <input
-                type="text"
-                id="newCategory"
-                value={newCategory}
-                onChange={(e) => setNewCategory(e.target.value)}
-                className="bg-slate-200 px-2 py-1 my-1"
-              />
-              <label htmlFor="newSection" className="mt-1">
-                New Section:
-              </label>
-              <input
-                type="text"
-                id="newSection"
-                value={newSection}
-                onChange={(e) => setNewSection(e.target.value)}
-                className="bg-slate-200 px-2 py-1 my-1"
-              />
-              <label htmlFor="newSubSection" className="mt-1">
-                New Sub-section:
-              </label>
-              <input
-                type="text"
-                id="newSubSection"
-                value={newSubSection}
-                onChange={(e) => setNewSubSection(e.target.value)}
-                className="bg-slate-200 px-2 py-1 my-1"
-              />
-              <button
-                className="bg-red-500 text-white px-4 py-2 mt-2 mx-2 rounded"
-                onClick={handleAddNewToggle}
-              >
-                Close
-              </button>
-              <button
-                className="bg-blue-500 text-white px-4 py-2 mt-2 rounded"
-                onClick={handleSaveNew}
-              >
-                Save
-              </button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 };
