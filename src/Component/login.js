@@ -11,7 +11,7 @@ import { loginRedux } from "../Redux/userSlice";
 import { useEffect } from "react";
 import api from "../utils/api.js";
 import Loader from "../Loader";
-import GoogleLogin from './GoogleLogin'
+import GoogleLogin from "./GoogleLogin";
 
 const Login = () => {
   let Navigate = useNavigate();
@@ -97,7 +97,7 @@ const Login = () => {
       setLoading(false); // Stop loading
     }
   };
-  const [accessToken, setAccessToken] = useState('');
+  const [accessToken, setAccessToken] = useState("");
 
   const handleLoginSuccess = (response) => {
     // Get the access token from the response
@@ -105,9 +105,8 @@ const Login = () => {
     setAccessToken(accessToken);
   };
   const handleLoginFailure = (error) => {
-    console.error('Google login failed:', error);
+    console.error("Google login failed:", error);
   };
-
 
   return (
     <div>
@@ -197,23 +196,21 @@ const Login = () => {
                     Signup
                   </Link>
                 </p>
-                
               </form>
               <div>
-      <h1>Google Login Example</h1>
-      {accessToken ? (
-        <div>
-          <p>Access Token: {accessToken}</p>
-          {/* Call your backend API with the obtained access token */}
-        </div>
-      ) : (
-        <GoogleLogin
-          onLoginSuccess={handleLoginSuccess}
-          onLoginFailure={handleLoginFailure}
-        />
-      )}
-    </div>
-
+                <h1>Google Login Example</h1>
+                {accessToken ? (
+                  <div>
+                    <p>Access Token: {accessToken}</p>
+                    {/* Call your backend API with the obtained access token */}
+                  </div>
+                ) : (
+                  <GoogleLogin
+                    onLoginSuccess={handleLoginSuccess}
+                    onLoginFailure={handleLoginFailure}
+                  />
+                )}
+              </div>
             </div>
           </div>
         </div>

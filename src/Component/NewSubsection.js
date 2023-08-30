@@ -1,24 +1,36 @@
-import {NavLink} from 'react-router-dom'
+import { NavLink } from "react-router-dom";
 import React, { useState } from "react";
 import axios from "axios";
 import api from "../utils/api";
 import { toast } from "react-hot-toast";
+import { useDispatch } from "react-redux";
+import { addsubsectionReducer } from "../Redux/categorySlice";
+
 const AddSubsection = ({ selectedCategory, selectedSection, onClose }) => {
   const [newSubsectionName, setNewSubsectionName] = useState("");
+  const dispatch = useDispatch();
 
   const handleAddSubsection = async () => {
     try {
       const response = await axios.post(
         `${api}/api/category/categories/${selectedCategory}/sections/${selectedSection}/subsections`,
-        { 
+        {
           subsection: newSubsectionName,
         }
       );
 
-      // Handle success, update UI, and close the modal
-      toast.success("Subsection added successfully");
+      if (response.status === 200) {
+        console.log("response: ", response);
+        const newSubsection = response.data.subsection;
+
+        dispatch(addsubsectionReducer({ subsection: newSubsection }));
+       
+
+        toast.success("Subsection added successfully");
+      }
+
       onClose();
-      window.location.reload();
+      // window.location.reload();
     } catch (error) {
       console.error("Error adding subsection:", error);
     }

@@ -3,7 +3,7 @@ import toast from 'react-hot-toast'
 
 const initialState = {
     productList : [],
-    cartItem : []
+   
 
      
 };
@@ -12,61 +12,57 @@ export const productSlice = createSlice({
     name: 'product',
     initialState,
     reducers: {
-        setDataProduct : (state,action)=>{
-            // console.log("actionData",action);
-            state.productList = [...action.payload];
+        // setDataProduct : (state,action)=>{
+        //     // console.log("actionData",action);
+        //     state.productList = [...action.payload];
             
-        },
-        addCartItem : (state,action)=>{
-            const check = state.cartItem.some((e)=> e._id ===  action.payload._id)
-            if(check)
-            {
-                toast("Item Already in cart");
-            }
-            else{
-                // console.log("actionData",action);
-                const total = action.payload.price
-                state.cartItem = [...state.cartItem,{...action.payload,qty:1,total :total}];
-                toast("Item added Successfully");
-            }
-        },
-        deleteCartItem : (state,action)=>{
-            // console.log(action.payload)
-            toast("item removed from cart")
-            const index = state.cartItem.findIndex((e)=>e._id === action.payload)
-            state.cartItem.splice(index,1)
-            // console.log("index",index)
+        // },
 
-        },
-        increaseQty : (state,action)=>{
-            const index = state.cartItem.findIndex((e)=>e._id === action.payload)
-             let qty = state.cartItem[index].qty;
-             const qtyInc = ++qty;
-             state.cartItem[index].qty = qtyInc
-             const price =  state.cartItem[index].price;
-             let total = price*qtyInc
-             state.cartItem[index].total = total;
+        setProductReducer: (state, action) => {
+            console.log("setProductReducer payload: ", action.payload);
+            // state.productList.unshift(action.payload);
+            state.productList = action.payload;
+          },
+
+        addProductReducer: (state, action) => {
+            console.log("addProductReducer payload: ", action.payload);
+            // state.productList.push(action.payload);
+            state.productList.unshift(action.payload);
+
+          },
+      
+          deleteProductReducer: (state, action) => {
+            console.log("deleteProductReducer paylod",action.payload)
+            const productId = action.payload;
+            const newProducts = state.productList.filter(
+              (product) => product._id !== productId
+            );
+      
+            return {
+              ...state,
+              productList: newProducts,
+            };
+          },
+          updateProductReducer: (state, action) => {
+            
+                const { categoryId, newName } = action.payload;
+                console.log("both : ", categoryId, newName);
+                const productToUpdate = state.productList.find(
+                  (product) => product._id === product
+                );
+                if (productToUpdate) {
+                    productToUpdate.product_name = newName;
+                }
               
+          }
 
-
-        },
-        decreaseQty : (state,action)=>{
-            const index = state.cartItem.findIndex((e)=>e._id === action.payload)
-            let qty = state.cartItem[index].qty;
-            if(qty > 1)
-            {   const qtyDec = --qty
-                state.cartItem[index].qty = qtyDec;
-                const price =  state.cartItem[index].price;
-             let total = price*qtyDec
-             state.cartItem[index].total = total;
-            }
-
-        }
+ 
+       
 
 
         
     },
 })
-export const { setDataProduct,addCartItem,deleteCartItem,increaseQty,decreaseQty} = productSlice.actions
+export const {addProductReducer,setProductReducer,deleteProductReducer,updateProductReducer } = productSlice.actions
 
 export default productSlice.reducer

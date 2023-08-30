@@ -17,8 +17,10 @@ const AddCategory = ({ onClose }) => {
       });
 
       // Add the new category to Redux store
+      const responseData = response.data;
+      console.log("response add category", response.data);
       toast.success("Category added successfully");
-      dispatch(addCategory({ _id: response.data._id, name: newCategoryName }));
+      dispatch(addCategory(responseData));
 
       // Close the modal or perform any other action after adding
       onClose();

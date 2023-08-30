@@ -18,12 +18,12 @@ const UpdateCategory = ({ categoryId, onClose }) => {
       });
 
       // Update Redux store with the new category name
-      toast.success("category updated successfully");
       dispatch(updateCategoryName({ categoryId, newName: newCategoryName }));
+      toast.success("category updated successfully");
 
       // Close the modal or perform any other action after update
       onClose();
-      window.location.reload();
+      // window.location.reload();
     } catch (error) {
       console.error("Error updating category name:", error);
     }

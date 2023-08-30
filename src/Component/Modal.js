@@ -8,10 +8,16 @@ import axios from "axios";
 import { toast } from "react-hot-toast";
 import api from "../utils/api";
 import { useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
+import {updateProductReducer} from '../Redux/productSlice'
 
 function Modal({ product, onClose }) {
   console.log("product", product);
   const productData = useSelector((state) => state.product.productList);
+  const CategoryData = useSelector((state) => state.category.categories);
+  const unitData = useSelector((state) => state.units);
+  console.log("unitData", unitData);
+  const dispatch  = useDispatch()
 
   const [data, setdata] = useState({
     u_product_name: "",
@@ -49,14 +55,48 @@ function Modal({ product, onClose }) {
     });
   };
 
-  const onChange = async (e) => {
+  const [subCategories, setSubCategories] = useState([]);
+  const [subSubSections, setSubSubSections] = useState([]);
+
+  const handleChange = (e) => {
     const { name, value } = e.target;
-    setdata((preve) => {
-      return {
-        ...preve,
+
+    if (name === "u_category") {
+      const selectedCategory = CategoryData.find(
+        (category) => category.name === value
+      );
+
+      // Update the sub-categories based on the selected category
+      setdata((prevData) => ({
+        ...prevData,
+        u_category: value,
+        u_sub_category: "", // Reset sub-category when category changes
+      }));
+
+      if (selectedCategory) {
+        setSubCategories(selectedCategory.sections || []);
+      }
+    } else if (name === "u_sub_category") {
+      const selectedSubCategory = subCategories.find(
+        (subCategory) => subCategory.name === value
+      );
+
+      // Update the sub-categories based on the selected category
+      setdata((prevData) => ({
+        ...prevData,
+        u_sub_category: value,
+        u_sub_sub_category: "", // Reset sub-sub-category when sub-category changes
+      }));
+
+      if (selectedSubCategory) {
+        setSubSubSections(selectedSubCategory.subsections || []);
+      }
+    } else {
+      setdata((prevData) => ({
+        ...prevData,
         [name]: value,
-      };
-    });
+      }));
+    }
   };
 
   const [open, setOpen] = useState(true);
@@ -83,7 +123,8 @@ function Modal({ product, onClose }) {
       if (u_product_name) updatedProduct.u_product_name = u_product_name;
       if (u_category) updatedProduct.u_category = u_category;
       if (u_sub_category) updatedProduct.u_sub_category = u_sub_category;
-      if (u_sub_sub_category)updatedProduct.u_sub_sub_category = u_sub_sub_category;
+      if (u_sub_sub_category)
+        updatedProduct.u_sub_sub_category = u_sub_sub_category;
       if (u_description) updatedProduct.u_description = u_description;
       if (u_quantity) updatedProduct.u_quantity = u_quantity;
       if (u_image) updatedProduct.u_image = u_image;
@@ -95,119 +136,21 @@ function Modal({ product, onClose }) {
         `${api}/api/product/updateProduct/${id}`,
         updatedProduct
       );
+      
 
       if (response.status === 200) {
+        console.log("updatedProduct", updatedProduct);
+        // dispatch(updateProductReducer( ))
         console.log("Product updated:", response.data.product);
         setOpen(false); // Close the modal after successful update
-        window.location.reload();
+        // window.location.reload();
+        
       } else {
         console.error("Product update failed:", response.data.Message);
       }
     } catch (error) {
       console.error("Error updating product:", error.message);
     }
-  };
-  const [selectedCategory, setSelectedCategory] = useState("");
-  const [selectedSubcategory, setSelectedSubcategory] = useState("");
-  const [selectedSubSubcategory, setSelectedSubSubcategory] = useState("");
-
-  const categories = [
-    "Groceries",
-    "Bakery and Dairy",
-    "Egg and Meat",
-    "Beverages",
-    "Packaged Foods",
-  ];
-  const subcategories = {
-    "Groceries": [
-      "Rice & Rice Products",
-      "Atta, Flour & Suji",
-      "Cooking Oil & Ghee",
-      "Dal & Pulses",
-    ],
-    "Bakery and Dairy": [
-      "Bread and Croissants",
-      "Dairy",
-      "Home Making",
-      "Icecream & Desserts",
-      "Muffins & Cookies",
-    ],
-    "Egg and Meat": [
-      "Eggs",
-      "Frozen Meet",
-      "Frozen Snacks",
-      "Sausage Ham & Salami",
-    ],
-    "Beverages": [
-      "Cocktail Mixes",
-      "Coffee",
-      "Energy And Health drinks",
-      "Fruit Juice and Drinks",
-      "Soft drinks",
-      "Tea",
-      "Water",
-      "Alcohol",
-    ],
-    "Packaged Foods": [
-      "Biscuits & Cookies",
-      "Breakfast Cereals",
-      " Canned & Processed food",
-      "Chocolates and Candies",
-      "Frozen Meal & snacks",
-      "Noodles & Pasta",
-      "Pickles & Chutney",
-      "Ready to cook Mixes",
-      "Snacks",
-      "Spreads, Sauce & Ketchup",
-    ],
-  };
-  const subsubcategories = {
-    "Rice & Rice Products": [
-      "Beaten Rice",
-      "Boiled Rice",
-      "Brown Rice",
-      "Jeera Masino Rice",
-      "Long Grain rice",
-      "Premium Basmati rice",
-      "Sona Mansuli Rice",
-      "Premium Rice from Nepal",
-      "Other Rice Products	",
-    ],
-    "Atta, Flour & Suji": ["Atta", "Besan & Suji", " Maida", "Other Flours"],
-
-    "Cooking Oil & Ghee": [
-      "Corn oil & others",
-      "Ghee",
-      "Olive oil",
-      "Sunflower cooking oil",
-      "Soya & Mustard oil",
-    ],
-    "Dairy": [
-      "Butter",
-      "Cheese & Tofu",
-      "Creamer & Whitener",
-      "Milk & Milk Products",
-    ],
-    
-
-    // Add more sub-subcategories here
-  };
-
-  const handleCategoryChange = (event) => {
-    setSelectedCategory(event.target.value);
-    onChange(event);
-    setSelectedSubcategory("");
-    setSelectedSubSubcategory("");
-  };
-
-  const handleSubcategoryChange = (event) => {
-    setSelectedSubcategory(event.target.value);
-    onChange(event);
-    setSelectedSubSubcategory("");
-  };
-  const handleSubSubcategoryChange = (event) => {
-    setSelectedSubSubcategory(event.target.value);
-    onChange(event);
   };
 
   return (
@@ -272,87 +215,80 @@ function Modal({ product, onClose }) {
                                   name="u_product_name"
                                   value={data.u_product_name}
                                   placeholder={product.product_name}
-                                  onChange={onChange}
+                                  onChange={handleChange}
                                   className="bg-slate-200 px-2 py-1 my-1"
                                 />
-
-                                <label htmlFor="category" className="mt-1">
+                                <label htmlFor="u_category" className="mt-1">
                                   Category:
                                 </label>
                                 <select
                                   name="u_category"
                                   id="u_category"
-                                  value={selectedCategory}
-                                
-                                  onChange={handleCategoryChange}
+                                  onChange={handleChange}
+                                  value={data.u_category}
                                   className="bg-slate-200 px-2 py-1 my-1"
                                 >
-                                  <option disabled selected value="">
-                                    Select an category
-                                  </option>
-                                  {categories.map((u_category) => (
-                                    <option name="u_category" value={u_category}>
-                                      {u_category}
+                                  <option value="">Select a category</option>
+                                  {CategoryData.map((category) => (
+                                    <option
+                                      key={category._id}
+                                      value={category.name}
+                                    >
+                                      {category.name}
                                     </option>
                                   ))}
                                 </select>
 
-                                <label htmlFor="u_sub_category" className="mt-1">
-                                  Section :
+                                <label
+                                  htmlFor="u_sub_category"
+                                  className="mt-1"
+                                >
+                                  Sub-Category:
                                 </label>
                                 <select
                                   name="u_sub_category"
                                   id="u_sub_category"
-                                  value={selectedSubcategory}
-                                  onChange={handleSubcategoryChange}
-                                  disabled={!selectedCategory}
+                                  onChange={handleChange}
+                                  value={data.u_sub_category}
                                   className="bg-slate-200 px-2 py-1 my-1"
                                 >
-                                  <option disabled selected value="">
-                                    Select an section
+                                  <option value="">
+                                    Select a sub-category
                                   </option>
-                                  {subcategories[selectedCategory] &&
-                                    subcategories[selectedCategory].map(
-                                      (u_sub_category) => (
-                                        <option
-                                          name="u_sub_category"
-                                          value={u_sub_category}
-                                        >
-                                          {u_sub_category}
-                                        </option>
-                                      )
-                                    )}
+                                  {subCategories.map((subCategory) => (
+                                    <option
+                                      key={subCategory.name}
+                                      value={subCategory.name}
+                                    >
+                                      {subCategory.name}
+                                    </option>
+                                  ))}
                                 </select>
 
                                 <label
                                   htmlFor="u_sub_sub_category"
                                   className="mt-1"
                                 >
-                                  Sub-section
+                                  Sub-Sub-Category:
                                 </label>
                                 <select
                                   name="u_sub_sub_category"
                                   id="u_sub_sub_category"
-                                  value={selectedSubSubcategory}
-                                  onChange={handleSubSubcategoryChange}
-                                  disabled={!selectedSubcategory}
+                                  onChange={handleChange}
+                                  value={data.u_sub_sub_category}
                                   className="bg-slate-200 px-2 py-1 my-1"
                                 >
-                                  <option disabled selected value="">
-                                    Select an sub-section
+                                  <option value="">
+                                    Select a sub-sub-category
                                   </option>
-                                  {selectedSubcategory &&
-                                    subsubcategories[selectedSubcategory] &&
-                                    subsubcategories[selectedSubcategory].map(
-                                      (u_sub_sub_category) => (
-                                        <option
-                                          name="u_sub_sub_category"
-                                          value={u_sub_sub_category}
-                                        >
-                                          {u_sub_sub_category}
-                                        </option>
-                                      )
-                                    )}
+                                  {subSubSections.map((subSubSection) => (
+                                    <option
+                                      key={subSubSection}
+                                      value={subSubSection}
+                                    >
+                                      {subSubSection}
+                                    </option>
+                                  ))}
                                 </select>
 
                                 <label
@@ -383,7 +319,6 @@ function Modal({ product, onClose }) {
                                     />
                                   </div>
                                 </label>
-
                                 <label htmlFor="u_price" className="mt-1">
                                   Price :
                                 </label>
@@ -392,38 +327,30 @@ function Modal({ product, onClose }) {
                                   name="u_price"
                                   id="u_price"
                                   value={data.u_price}
-                                  onChange={onChange}
+                                  onChange={handleChange}
                                   placeholder={product.price}
                                   className="bg-slate-200 px-2 py-1 my-1"
                                 />
-
                                 <label htmlFor="u_price" className="mt-1">
                                   Quantity :
                                 </label>
                                 <select
                                   name="u_quantity"
                                   id="u_quantity"
-                                  onChange={onChange}
+                                  onChange={handleChange}
                                   defaultValue={product.quantity}
                                   className="bg-slate-200 px-2 py-1 my-1"
                                 >
-                                  <option disabled selected value="">
-                                    Select an quantity type
-                                  </option>
-                                  <option
-                                    name="u_quantity"
-                                    value={" per piece"}
-                                  >
-                                    per piece
-                                  </option>
-                                  <option name="u_quantity" value={" per box"}>
-                                    per box
-                                  </option>
-                                  <option name="u_quantity" value={"per KG"}>
-                                    per KG
-                                  </option>
+                                  <option value="">Select a category</option>
+                                  {unitData.map((Unit) => (
+                                    <option
+                                      key={Unit._id}
+                                      value={Unit.name}
+                                    >
+                                      {Unit.name}
+                                    </option>
+                                  ))}
                                 </select>
-
                                 <label htmlFor="description" className="mt-1">
                                   Description :
                                 </label>
@@ -432,7 +359,7 @@ function Modal({ product, onClose }) {
                                   id="u_description"
                                   rows="3"
                                   value={data.u_description}
-                                  onChange={onChange}
+                                  onChange={handleChange}
                                   className="bg-slate-200 px-2 py-1 my-1 resize-none"
                                   placeholder={product.description}
                                 ></textarea>

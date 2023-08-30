@@ -1,4 +1,5 @@
 import React from "react";
+import { useDispatch } from "react-redux";
 
 const ProductItem = ({
   product,
@@ -7,6 +8,8 @@ const ProductItem = ({
   handleUpdateClick,
   expandedProducts,
 }) => {
+
+  const dispatch = useDispatch()
   return (
     <div
       key={product._id}
@@ -26,9 +29,13 @@ const ProductItem = ({
         {product.product_name}
       </p>
 
+      <p className="text-red-500 font-semibold my-1">
+        <p className="text-black">Barcode</p>
+        {product.barcode ? product.barcode : "-"}
+      </p>
       <p className="text-gray-500 my-1">
         <p className="text-black">Category</p>
-        {product.category}
+        { product.category}
       </p>
       <p className="text-gray-500 my-1">
         <p className="text-black">Section</p>
@@ -75,7 +82,7 @@ const ProductItem = ({
       <div className="my-1">
         <button
           className="bg-red-500 text-white px-4 py-2 mt-2 mx-2 rounded"
-          onClick={(e) => deleteProduct(product._id, e)}
+          onClick={(e) => deleteProduct(product._id, e,dispatch)}
         >
           Delete
         </button>

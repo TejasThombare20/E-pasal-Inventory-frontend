@@ -1,10 +1,11 @@
 import React, { useState } from "react";
 import { useDispatch } from "react-redux";
-import { updateSubsectionName } from "../Redux/categorySlice"; // Import your Redux action
+// Import your Redux action
 import api from "../utils/api";
 import { NavLink } from "react-router-dom";
 import axios from "axios";
 import { toast } from "react-hot-toast";
+import { updatesubsectionReducer } from "../Redux/categorySlice";
 
 const UpdateSubsection = ({
   categoryId,
@@ -22,17 +23,20 @@ const UpdateSubsection = ({
     console.log("subsectionIndex", subsectionIndex);
 
     try {
-      await axios.put(
+      const response =  await axios.put(
         `${api}/api/category/${categoryId}/updateSubsection/${sectionId}/${subsectionIndex}`,
         {
           newSubsectionName,
         }
       );
-      toast.success("Subsection updated successfully");
+      if (response.status  === 200) {
+          dispatch(updatesubsectionReducer({sectionId,subsectionIndex, newSubsectionName}))
+        toast.success("Subsection updated successfully");
+      }
 
       // Close the modal or perform any other action after update
       onClose();
-      window.location.reload();
+      // window.location.reload();
     } catch (error) {
       console.error("Error updating subsection name:", error);
     }

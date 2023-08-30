@@ -9,7 +9,7 @@ import { Toaster } from "react-hot-toast";
 import { useEffect } from "react";
 import axios from "axios";
 import { useDispatch, useSelector } from "react-redux";
-import { setDataProduct } from "./Redux/productSlice";
+import {  setProductReducer } from "./Redux/productSlice";
 import api from "./utils/api";
 import ProductList from "./Component/Productlist";
 import Modal from "./Component/Modal";
@@ -33,7 +33,8 @@ function App() {
         });
         console.log("fetch all products2");
         const responseData = response.data;
-        dispatch(setDataProduct(responseData));
+        
+        dispatch(setProductReducer(response.data));
       } catch (error) {
         console.log(error);
       }

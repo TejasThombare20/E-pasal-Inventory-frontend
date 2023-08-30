@@ -6,6 +6,8 @@ const categorySlice = createSlice({
   name: "category",
   initialState: {
     categories: [],
+    sections: [],
+    subsections: [],
   },
   reducers: {
     setCategories: (state, action) => {
@@ -14,15 +16,7 @@ const categorySlice = createSlice({
     addCategory: (state, action) => {
       state.categories.push(action.payload);
     },
-    setSelectedCategory: (state, action) => {
-      state.selectedCategory = action.payload;
-    },
-    setSelectedSection: (state, action) => {
-      state.selectedSection = action.payload;
-    },
-    setSelectedSubsection: (state, action) => {
-      state.selectedSubsection = action.payload;
-    },
+
     updateCategoryName: (state, action) => {
       const { categoryId, newName } = action.payload;
       console.log("both : ", categoryId, newName);
@@ -33,51 +27,104 @@ const categorySlice = createSlice({
         categoryToUpdate.name = newName;
       }
     },
-    updateSectionName: (state, action) => {
-      const { categoryId, sectionId, newName } = action.payload;
-      const categoryToUpdate = state.categories.find(
-        (category) => category._id === categoryId
+
+    deleteCategoryReducer: (state, action) => {
+      const categoryIdToDelete = action.payload;
+      const newCategories = state.categories.filter(
+        (category) => category._id !== categoryIdToDelete
       );
 
-      if (categoryToUpdate) {
-        const sectionToUpdate = categoryToUpdate.sections.find(
-          (section) => section._id === sectionId
-        );
+      return {
+        ...state,
+        categories: newCategories,
+      };
+    },
 
-        if (sectionToUpdate) {
-          sectionToUpdate.name = newName;
-        }
+    setSectionsReducer: (state, action) => {
+      console.log("setsection payload", action.payload);
+      state.sections = action.payload;
+    },
+
+    addSectionReducer: (state, action) => {
+      console.log("addsection payload", action.payload);
+      state.sections.push(action.payload);
+    },
+    updateSectionReducer: (state, action) => {
+      const { sectionId, newSectionName } = action.payload;
+      console.log("both : ", sectionId, newSectionName);
+      const sectionToUpdate = state.sections.find(
+        (section) => section._id === sectionId
+      );
+      if (sectionToUpdate) {
+        sectionToUpdate.name = newSectionName;
       }
     },
-    updateSubsectionName: (state, action) => {
-      const { categoryId, sectionId, subsectionIndex, newName } =
-        action.payload;
-      const categoryToUpdate = state.categories.find(
-        (category) => category._id === categoryId
+    deleteSectionReducer: (state, action) => {
+      const sectionIdToDelete = action.payload;
+      console.log("sectionIdToDelete", sectionIdToDelete);
+      const newSections = state.sections.filter(
+        (section) => section._id !== sectionIdToDelete
       );
 
-      if (categoryToUpdate) {
-        const sectionToUpdate = categoryToUpdate.sections.find(
-          (section) => section._id === sectionId
-        );
+      return {
+        ...state,
+        sections: newSections,
+      };
+    },
 
-        if (sectionToUpdate && sectionToUpdate.subsections[subsectionIndex]) {
-          sectionToUpdate.subsections[subsectionIndex] = newName;
-        }
+    setsubsectionsReducer: (state, action) => {
+      console.log("setsubsection payload", action.payload);
+      state.subsections = action.payload;
+    },
+
+    addsubsectionReducer: (state, action) => {
+      console.log("addssubsection payload", action.payload);
+      state.subsections.push(action.payload.subsection);
+    },
+
+    updatesubsectionReducer: (state, action) => {
+      const { subsectionIndex, newSubsectionName } = action.payload;
+      console.log("both : ", subsectionIndex, newSubsectionName);
+
+      if (state.subsections[subsectionIndex]) {
+        state.subsections[subsectionIndex] = newSubsectionName;
       }
     },
+
+    deletesubsectionReducer: (state, action) => {
+      const subsectionIndexToDelete = action.payload;
+
+      if (
+        subsectionIndexToDelete >= 0 &&
+        subsectionIndexToDelete < state.subsections.length
+      ) {
+        state.subsections.splice(subsectionIndexToDelete, 1);
+      }
+    },
+
+   
+    
   },
 });
 
 export const {
   setCategories,
   addCategory,
+  deleteCategoryReducer,
+  setSectionsReducer,
+  addSectionReducer,
+  updateSectionReducer,
+  deleteSectionReducer,
+  setsubsectionsReducer,
+  addsubsectionReducer,
+  updatesubsectionReducer,
+  deletesubsectionReducer,
   setSelectedCategory,
   setSelectedSection,
   setSelectedSubsection,
   updateCategoryName,
   updateSectionName,
-  updateSubsectionName
+  updateSubsectionName,
 } = categorySlice.actions;
 
 // Async action to fetch categories

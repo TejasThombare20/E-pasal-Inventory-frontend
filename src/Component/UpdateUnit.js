@@ -3,9 +3,12 @@ import axios from "axios";
 import { toast } from "react-hot-toast";
 import api from "../utils/api";
 import { NavLink } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { updateUnit } from "../Redux/unitSlice";
 
-const UpdateUnit = ({ unitId, onClose, updateUnitCallback }) => {
+const UpdateUnit = ({ unitId, onClose }) => {
   const [newUnitName, setNewUnitName] = useState("");
+  const dispatch = useDispatch()
 
   const handleUpdateUnit = async () => {
     try {
@@ -24,10 +27,12 @@ const UpdateUnit = ({ unitId, onClose, updateUnitCallback }) => {
 
       if (response.status === 200) {
         // Update the unit name in the parent component's state
-        updateUnitCallback(unitId, newUnitName);
+       const responseData  = response.data
+       console.log("responseData", responseData);
+       dispatch(updateUnit(responseData))
         toast.success("Unit updated successfully");
         onClose();
-        window.location.reload();
+        // window.location.reload();
       } else {
         console.log("Unexpected response:", response.status, response.data);
       }

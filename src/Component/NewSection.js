@@ -3,7 +3,11 @@ import axios from "axios";
 import { toast } from "react-hot-toast";
 import api from "../utils/api";
 import {NavLink} from "react-router-dom"
+import { useDispatch } from "react-redux";
+import { addSectionReducer } from "../Redux/categorySlice";
+
 const AddSection = ({ categoryId, onClose }) => {
+  const dispatch  = useDispatch()
   // const [newSectionName, setNewSectionName] = useState("");
   const [sectionName, setSectionName] = useState("");
 
@@ -12,16 +16,24 @@ const AddSection = ({ categoryId, onClose }) => {
       const response = await axios.post(`${api}/api/category/addSection/${categoryId}`, {
         sectionName: sectionName,
       });
-
+     
+      const newSection = response.data.sections.find(
+        (section) => section.name === sectionName
+      );
+      console.log("newSection",newSection)
       // Show a success toast and do other necessary actions
-      toast.success("Section added successfully");
-      onClose();
-      window.location.reload();
-      // You might want to update your state or perform other actions after success
+     if (response.status === 200 )
+     {
+       dispatch(addSectionReducer(newSection ))
+       toast.success("Section added successfully");       
+      }
+      onClose();      
+      // window.location.reload();
+
     } catch (error) {
       console.error("Error adding section:", error);
       toast.error("Error adding section");
-      // Handle error appropriately (e.g., show an error toast)
+      
     }
   };
 

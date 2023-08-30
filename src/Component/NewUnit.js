@@ -3,20 +3,25 @@ import axios from "axios";
 import { toast } from "react-hot-toast";
 import api from "../utils/api";
 import { NavLink } from "react-router-dom";
+import { useDispatch } from 'react-redux'
+import { addUnit } from "../Redux/unitSlice";
 
 const AddUnit = ({ onClose }) => {
   const [unitName, setUnitName] = useState("");
+  const dispatch = useDispatch();
 
   const handleAddUnit = async () => {
     try {
       const response = await axios.post(`${api}/api/unit/addUnit`, {
         name: unitName,
       });
+      const newUnitData = response.data;
 
       // Show a success toast and do other necessary actions
+      dispatch(addUnit(newUnitData));
       toast.success("Unit added successfully");
       onClose();
-      window.location.reload();
+      // window.location.reload();
       // You might want to update your state or perform other actions after success
     } catch (error) {
       console.error("Error adding unit:", error);

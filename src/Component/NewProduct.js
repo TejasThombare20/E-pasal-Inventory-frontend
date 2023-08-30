@@ -2,38 +2,48 @@ import React, { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { FaUpload } from "react-icons/fa";
 import { imageToBase64 } from "../Utility/ImageToBase64";
-import axios from "axios";
 import { toast } from "react-hot-toast";
-import api from "../utils/api";
 import Modal from "../Component/Modal";
 import { useNavigate, NavLink } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
-import { setCategory } from "../Redux/categorySlice";
+import { setCategory, setsubsectionsReducer } from "../Redux/categorySlice";
 import UpdateCategory from "./UpdateCategory";
 import Category from "./Category";
 import UpdateSection from "./UpdateSection";
 import UpdateSubsection from "./UpdateSubsection";
-import { FcDeleteDatabase } from "react-icons/fc";
-import { FcEditImage } from "react-icons/fc";
 import ProductItem from "./ProductItem";
 import Select from "react-select";
-import { fetchUnits } from "../frontendAPI";
+import {
+  addProduct,
+  fetchUnits,
+  deleteProduct,
+  deleteCategory,
+  deleteSection,
+  deleteSubsection,
+  handleDeleteUnitClick,
+} from "../FrontendAPI/frontendAPI";
 import UpdateUnit from "./UpdateUnit";
-import { setDataProduct } from "../Redux/productSlice";
+import { addProductReducer } from "../Redux/productSlice";
 import NewSection from "./NewSection";
 import NewSubsection from "./NewSubsection";
 import NewUnit from "./NewUnit";
 import { FiEdit } from "react-icons/fi";
 import { MdDelete } from "react-icons/md";
-import NewCategory from "./NewCategory";
-
+import { setUnits } from "../Redux/unitSlice";
+import { setSectionsReducer } from "../Redux/categorySlice";
 const NewProduct = ({ accessToken }) => {
   const dispatch = useDispatch();
   const productData = useSelector((state) => state.product.productList);
   console.log("productData", productData);
 
+
   const CategoryData = useSelector((state) => state.category.categories);
   console.log("CategoryData", CategoryData);
+
+  const SectionData = useSelector((state) => state.category.sections);
+  console.log("SectionData", SectionData);
+
+  const subsectionData = useSelector((state) => state.category.subsections);
+  console.log("SubsectionData", subsectionData);
 
   const [selectedCategory, setSelectedCategory] = useState(""); // Add this line
 
@@ -42,13 +52,14 @@ const NewProduct = ({ accessToken }) => {
   const [subsectionsForSelectedSection, setSubsectionsForSelectedSection] =
     useState([]);
   const [selectedSubcategory, setSelectedSubcategory] = useState("");
-  const [selectedSubsection, setSelectedSubsection] = useState(""); // Add this line
+  const [selectedSubsection, setSelectedSubsection] = useState("");
   const [data, setdata] = useState({
     product_name: "",
     category: "",
     sub_category: "",
     sub_sub_category: "",
     image: "",
+    barcode : "",
     price: "",
     quantity: "",
     description: "",
@@ -94,7 +105,6 @@ const NewProduct = ({ accessToken }) => {
     }
   }
   const onChange = (name, selectedValue) => {
-
     console.log("Selected value:", selectedValue);
     if (name === "category") {
       const selectedCategoryData = CategoryData.find(
@@ -108,6 +118,7 @@ const NewProduct = ({ accessToken }) => {
         sub_sub_category: "", // Reset sub-sub-category when category changes
       }));
       const sectionsForSelectedCategory = selectedCategoryData?.sections || [];
+      dispatch(setSectionsReducer(sectionsForSelectedCategory));
       setSectionsForSelectedCategory(sectionsForSelectedCategory);
       setSelectedSubcategory("");
       setSelectedSubsection("");
@@ -123,17 +134,23 @@ const NewProduct = ({ accessToken }) => {
       }));
       const subsectionsForSelectedSection =
         selectedSectionData?.subsections || [];
+
+      console.log(
+        "subsectionsForSelectedSection",
+        subsectionsForSelectedSection
+      );
+      dispatch(setsubsectionsReducer(subsectionsForSelectedSection));
       setSubsectionsForSelectedSection(subsectionsForSelectedSection);
     } else if (name === "sub_sub_category") {
       const selectedSubsectionValue = selectedValue.value;
-      console.log("selectedValue",selectedValue)
-      
-      const selectedSubsectionIndex = CategoryData.find(
-        (category) => category._id === selectedCategory
-      )
-        .sections.find((section) => section._id === selectedSubcategory)
-        .subsections.indexOf(selectedSubsectionValue);
-      setSelectedSubsection(selectedSubsectionIndex);
+      console.log("selectedValue", selectedValue);
+
+      // const selectedSubsectionIndex = CategoryData.find(
+      //   (category) => category._id === selectedCategory
+      // )
+      //   .sections.find((section) => section._id === selectedSubcategory)
+      //   .subsections.indexOf(selectedSubsectionValue);
+      // setSelectedSubsection(selectedSubsectionIndex);
       setdata((prevData) => ({
         ...prevData,
         sub_sub_category: selectedValue,
@@ -162,76 +179,47 @@ const NewProduct = ({ accessToken }) => {
       description,
       quantity,
       image,
+      barcode,
       price,
     } = data;
 
     try {
-      const response = await axios.post(
-        `${api}/api/product/addProduct`,
-        JSON.stringify({
-          product_name,
-          category,
-          sub_category,
-          sub_sub_category,
-          description,
-          quantity,
-          image,
-          price,
-        }),
-        {
-          headers: {
-            Accept: "*/*",
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      // If the product is added successfully, update the Redux store
-      if (response.status === 200) {
-        const newProduct = response.data; // Assuming the response returns the newly added product
-        dispatch(setDataProduct([...productData, newProduct])); // Add the new product to the Redux store
-
-        toast("Product added successfully");
-        setTimeout(() => {
-          window.location.reload();
-        }, 500);
-      } else {
-        console.log("Unexpected response:", response.status, response.data);
-      }
+      const newProduct = await addProduct({
+        product_name,
+        category,
+        sub_category,
+        sub_sub_category,
+        description,
+        quantity,
+        image,
+        barcode,
+        price,
+      });
+      console.log("hello");
+      // dispatch(setDataProduct([...productData, newProduct]));
+      const addProductData = newProduct.savedProduct;
+      console.log("addProductData", addProductData);
+      dispatch(addProductReducer(addProductData));
+      toast("Product added successfully");
+      setdata({
+        product_name: "",
+        category: " ",
+        sub_category: "",
+        sub_sub_category: "",
+        description: "",
+        quantity: "",
+        image: "",
+        barcode : "",
+        price: "",
+      });
     } catch (error) {
       console.error("Error adding product:", error.message);
     }
   };
 
-  const deleteProduct = async (productID, e) => {
-    const confirmDelete = window.confirm(
-      "Are you sure you want to delete this product ?"
-    );
-    if (confirmDelete) {
-      try {
-        e.preventDefault();
-        const response = await axios.delete(
-          `${api}/api/product/deleteProduct/${productID}`
-        );
-        window.location.reload(true);
-
-        if (response.status === 204) {
-          console.log("Product deleted successfully");
-        } else {
-          console.log("Unexpected response:", response.status, response.data);
-        }
-        setTimeout(() => {
-          window.location.reload();
-        }, 500);
-      } catch (error) {
-        console.error("Error deleting product:", error.message);
-      }
-    }
-  };
   const [addCategoryOpen, setAddCategoryOpen] = useState(false);
 
   const addCategoryButton = () => {
-    console.log("Add category open");
     setAddCategoryOpen(true); // Toggle the state
   };
 
@@ -281,135 +269,42 @@ const NewProduct = ({ accessToken }) => {
   const [selectedUpdateSubsection, setSelectedUpdateSubsection] = useState({
     categoryId: null,
     sectionId: null,
-    subsectionIndex: null,
+    // subsectionIndex: null,
+    index: null,
   });
   const handleUpdateSubsectionClick = (
     categoryId,
     sectionId,
-    subsectionIndex
+    // subsectionIndex
+    index
   ) => {
-    console.log("subsectionIndex", subsectionIndex);
+    // console.log("subsectionIndex", subsectionIndex);
     // Open the UpdateSubsection modal and pass the data as props
     setIsUpdateSubsectionModalOpen(true);
     setSelectedUpdateSubsection({
       categoryId,
       sectionId,
-      subsectionIndex: sectionsForSelectedCategory
-        .find((section) => section._id === sectionId)
-        .subsections.indexOf(subsectionIndex), // Get the index of the subsection
+      index,
+      // subsectionIndex: sectionsForSelectedCategory
+      //   .find((section) => section._id === sectionId)
+      //   .subsections.indexOf(subsectionIndex), // Get the index of the subsection
     });
   };
 
-  // delete the category
-  const deleteCategory = async (categoryId) => {
-    const confirmDelete = window.confirm(
-      "Are you sure you want to delete this category?"
-    );
-    if (confirmDelete) {
-      try {
-        const response = await axios.delete(
-          `${api}/api/category/categories/${categoryId}`
-        );
-        if (response.status === 200) {
-          toast("Category deleted successfully");
-          window.location.reload();
-          // You might want to refresh the data or update the Redux state after deletion
-        } else {
-          console.log("Unexpected response:", response.status, response.data);
-        }
-      } catch (error) {
-        console.error("Error deleting category:", error.message);
-      }
-    }
-  };
-  // deletion of the section
-  const deleteSection = async (categoryId, sectionId) => {
-    const confirmDelete = window.confirm(
-      "Are you sure you want to delete this section?"
-    );
-    if (confirmDelete) {
-      try {
-        const response = await axios.delete(
-          `${api}/api/category/${categoryId}/sections/${sectionId}`
-        );
-        if (response.status === 200) {
-          toast("Section deleted successfully");
-          window.location.reload();
-          // You might want to refresh the data or update the Redux state after deletion
-        } else {
-          console.log("Unexpected response:", response.status, response.data);
-        }
-      } catch (error) {
-        console.error("Error deleting section:", error.message);
-      }
-    }
-  };
-
-  //  deletion of the subsection
-
-  const deleteSubsection = async (categoryId, sectionId, subsectionIndex) => {
-    console.log("subsectionIndex", subsectionIndex);
-    const confirmDelete = window.confirm(
-      "Are you sure you want to delete this subsection?"
-    );
-    if (confirmDelete) {
-      try {
-        const response = await axios.delete(
-          `${api}/api/category/${categoryId}/sections/${sectionId}/subsections/${subsectionIndex}`
-        );
-        if (response.status === 200) {
-          toast("Subsection deleted successfully");
-          // You might want to refresh the data or update the Redux state after deletion
-        } else {
-          console.log("Unexpected response:", response.status, response.data);
-        }
-      } catch (error) {
-        console.error("Error deleting subsection:", error.message);
-      }
-    }
-  };
-
-  const [units, setUnits] = useState([]);
-
   useEffect(() => {
     async function fetchUnitsData() {
-      const unitsData = await fetchUnits();
-      setUnits(unitsData);
+      const units = await fetchUnits();
+      dispatch(setUnits(units));
     }
     fetchUnitsData();
   }, []);
+  const unitsData = useSelector((state) => state.units);
+  console.log("unitsData", unitsData);
 
   const [selectedUnitForUpdate, setSelectedUnitForUpdate] = useState(null);
   const handleUpdateUnitClick = (unitId) => {
-    const selectedUnit = units.find((unit) => unit._id === unitId);
+    const selectedUnit = unitsData.find((unit) => unit._id === unitId);
     setSelectedUnitForUpdate(selectedUnit);
-  };
-  const handleUnitUpdate = (unitId, newName) => {
-    // Update the units list with the new unit name
-    const updatedUnits = units.map((unit) =>
-      unit._id === unitId ? { ...unit, name: newName } : unit
-    );
-    setUnits(updatedUnits);
-  };
-
-  const handleDeleteUnitClick = async (unitId) => {
-    const confirmDelete = window.confirm(
-      "Are you sure you want to delete this unit?"
-    );
-    if (confirmDelete) {
-      try {
-        const response = await axios.delete(
-          `${api}/api/unit/deleteUnit/${unitId}`
-        );
-        if (response.status === 200) {
-          toast("Unit deleted successfully");
-        } else {
-          console.log("Unexpected response:", response.status, response.data);
-        }
-      } catch (error) {
-        console.error("Error deleting unit:", error.message);
-      }
-    }
   };
 
   const [isAddSectionModalOpen, setIsAddSectionModalOpen] = useState(false);
@@ -460,7 +355,7 @@ const NewProduct = ({ accessToken }) => {
   return (
     <div className="  p-4 ">
       <form
-        className=" m-auto bg-white w-full max-w-md p-4 shadow-lg drop-shadow-md flex flex-col"
+        className=" m-auto bg-white w-full max-w-md  p-4 shadow-lg drop-shadow-md flex flex-col"
         action=""
         onSubmit={handleSubmit}
       >
@@ -484,39 +379,43 @@ const NewProduct = ({ accessToken }) => {
           <NavLink
             to="#"
             className="bg-blue-500 rounded-md text-white text-sm px-2 py-1"
-            onClick={addCategoryButton} 
+            onClick={addCategoryButton}
           >
             Add new
           </NavLink>
         </div>
-        {addCategoryOpen && <Category onClose={() => setAddCategoryOpen(false)} />}
-        <Select
-          options={CategoryData.map((category) => ({
-            value: category._id,
-            label: (
-              <div className="flex items-center justify-between">
-                {category.name}
-                <div className="flex gap-2">
-                  <NavLink
-                    className="bg-green-400 text-sm text-white px-2 py-1 rounded"
-                    onClick={() => handleUpdateCategoryClick(category._id)}
-                  >
-                    <FiEdit size={15} />
-                  </NavLink>
-                  <NavLink
-                    className="bg-red-500  text-sm text-white px-2 py-1 rounded"
-                    onClick={() => deleteCategory(category._id)}
-                  >
-                    <MdDelete size={15} />
-                  </NavLink>
+        {addCategoryOpen && (
+          <Category onClose={() => setAddCategoryOpen(false)} />
+        )}
+        {CategoryData && (
+          <Select
+            options={CategoryData.map((category) => ({
+              value: category._id,
+              label: (
+                <div className="flex items-center justify-between">
+                  {category.name}
+                  <div className="flex gap-2">
+                    <NavLink
+                      className="bg-green-400 text-sm text-white px-2 py-1 rounded"
+                      onClick={() => handleUpdateCategoryClick(category._id)}
+                    >
+                      <FiEdit size={15} />
+                    </NavLink>
+                    <NavLink
+                      className="bg-red-500  text-sm text-white px-2 py-1 rounded"
+                      onClick={() => deleteCategory(category._id, dispatch)}
+                    >
+                      <MdDelete size={15} />
+                    </NavLink>
+                  </div>
                 </div>
-              </div>
-            ),
-          }))}
-          onChange={(selectedOption) =>
-            onChange("category", selectedOption.value)
-          }
-        />
+              ),
+            }))}
+            onChange={(selectedOption) =>
+              onChange("category", selectedOption.value)
+            }
+          />
+        )}
         {isUpdateCategoryModalOpen && (
           <UpdateCategory
             categoryId={selectedCategoryForUpdate}
@@ -546,7 +445,7 @@ const NewProduct = ({ accessToken }) => {
         )}
 
         <Select
-          options={sectionsForSelectedCategory.map((section) => ({
+          options={SectionData.map((section) => ({
             value: section._id,
             label: (
               <div className="flex items-center justify-between">
@@ -560,7 +459,9 @@ const NewProduct = ({ accessToken }) => {
                   </NavLink>
                   <NavLink
                     className="bg-red-500 text-white px-2 py-1 rounded"
-                    onClick={() => deleteSection(selectedCategory, section._id)}
+                    onClick={() =>
+                      deleteSection(selectedCategory, section._id, dispatch)
+                    }
                   >
                     <MdDelete size={15} />
                   </NavLink>
@@ -603,49 +504,51 @@ const NewProduct = ({ accessToken }) => {
             onClose={handleAddSubsectionClose}
             selectedSection={selectedSubcategory}
             selectedCategory={selectedCategory}
-            // Pass any necessary props to the AddSubsection component
           />
         )}
 
         <Select
           options={
-            selectedSubcategory
-              ? sectionsForSelectedCategory
-                  .find((section) => section._id === selectedSubcategory)
-                  .subsections.map((subsection, index) => ({
-                    value: subsection,
-                    label: (
-                      <div className="flex items-center justify-between">
-                        {subsection}
-                        <div className="flex gap-2">
-                          <NavLink
-                            className="bg-green-400 text-white px-2 py-1 rounded"
-                            onClick={() =>
-                              handleUpdateSubsectionClick(
-                                selectedCategory,
-                                selectedSubcategory,
-                                subsection
-                              )
-                            }
-                          >
-                            <FiEdit size={15} />
-                          </NavLink>
-                          <NavLink
-                            className="bg-red-500 text-white px-2 py-1 rounded"
-                            onClick={() => {
-                              deleteSubsection(
-                                selectedCategory,
-                                selectedSubcategory,
-                                index
-                              );
-                            }}
-                          >
-                            <MdDelete size={15} />
-                          </NavLink>
-                        </div>
+            // selectedSubcategory
+            //   ? sectionsForSelectedCategory
+            //       .find((section) => section._id === selectedSubcategory)
+            //       .subsectionData.map((subsection, index) => ({
+            sectionsForSelectedCategory && subsectionData
+              ? subsectionData.map((subsection, index) => ({
+                  value: subsection,
+                  label: (
+                    <div className="flex items-center justify-between">
+                      {subsection}
+                      <div className="flex gap-2">
+                        <NavLink
+                          className="bg-green-400 text-white px-2 py-1 rounded"
+                          onClick={() =>
+                            handleUpdateSubsectionClick(
+                              selectedCategory,
+                              selectedSubcategory,
+                              index
+                            )
+                          }
+                        >
+                          <FiEdit size={15} />
+                        </NavLink>
+                        <NavLink
+                          className="bg-red-500 text-white px-2 py-1 rounded"
+                          onClick={() => {
+                            deleteSubsection(
+                              selectedCategory,
+                              selectedSubcategory,
+                              index,
+                              dispatch
+                            );
+                          }}
+                        >
+                          <MdDelete size={15} />
+                        </NavLink>
                       </div>
-                    ),
-                  }))
+                    </div>
+                  ),
+                }))
               : []
           }
           isDisabled={!selectedSubcategory}
@@ -659,7 +562,8 @@ const NewProduct = ({ accessToken }) => {
           <UpdateSubsection
             categoryId={selectedUpdateSubsection.categoryId}
             sectionId={selectedUpdateSubsection.sectionId}
-            subsectionIndex={selectedUpdateSubsection.subsectionIndex}
+            // subsectionIndex={selectedUpdateSubsection.subsectionIndex}
+            subsectionIndex={selectedUpdateSubsection.index}
             onClose={() => setIsUpdateSubsectionModalOpen(false)}
           />
         )}
@@ -703,6 +607,18 @@ const NewProduct = ({ accessToken }) => {
           </div>
         </label> */}
 
+        <label htmlFor="barcode" className="mt-1">
+          Barcode :
+        </label>
+        <input
+          type="text"
+          name="barcode"
+          id="barcode"
+          value={data.barcode}
+          onChange={(e) => onChange("barcode", e.target.value)}
+          className="bg-slate-200 px-2 py-1 my-1"
+        />
+
         <label htmlFor="price" className="mt-1">
           Price :
         </label>
@@ -732,12 +648,12 @@ const NewProduct = ({ accessToken }) => {
           <UpdateUnit
             unitId={selectedUnitForUpdate._id}
             onClose={() => setSelectedUnitForUpdate(null)}
-            updateUnitCallback={handleUnitUpdate}
+            // updateUnitCallback={handleUnitUpdate}
           />
         )}
 
         <Select
-          options={units.map((unit) => ({
+          options={unitsData.map((unit) => ({
             value: unit._id,
             label: (
               <div className="flex items-center justify-between">
@@ -751,7 +667,7 @@ const NewProduct = ({ accessToken }) => {
                   </NavLink>
                   <NavLink
                     className="bg-red-500 text-white px-2 py-1 rounded"
-                    onClick={() => handleDeleteUnitClick(unit._id)}
+                    onClick={() => handleDeleteUnitClick(unit._id, dispatch)}
                   >
                     <MdDelete size={15} />
                   </NavLink>

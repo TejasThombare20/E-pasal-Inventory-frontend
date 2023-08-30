@@ -1,10 +1,11 @@
 import React, { useState } from "react";
 import api from "../utils/api";
 import { useDispatch } from "react-redux";
-import {  updateSectionName } from "../Redux/categorySlice"; // Or use the appropriate action
+import { updateSectionName } from "../Redux/categorySlice"; // Or use the appropriate action
 import { NavLink } from "react-router-dom";
 import axios from "axios";
 import { toast } from "react-hot-toast";
+import { updateSectionReducer } from "../Redux/categorySlice";
 
 const UpdateSection = ({ categoryId, sectionId, onClose }) => {
   const [newSectionName, setNewSectionName] = useState("");
@@ -12,27 +13,22 @@ const UpdateSection = ({ categoryId, sectionId, onClose }) => {
 
   const handleUpdateSection = async () => {
     try {
-      await axios.put(
+      const response = await axios.put(
         `${api}/api/category/${categoryId}/updateSection/${sectionId}`,
         {
           name: newSectionName,
         }
       );
-      toast.success("section updated successfully");
 
-
-      // Fetch the updated categories to refresh the data in Redux store
-      dispatch(
-        updateSectionName({
-          categoryId: categoryId,
-          sectionId: sectionId,
-          newName: newSectionName,
-        })
-      )
-      
-      // Close the modal or perform any other action after update
+      console.log("response", response);
+      if (response.status === 200) {
+        dispatch(updateSectionReducer({sectionId ,newSectionName }));
+        toast.success("section updated successfully");
+      }
       onClose();
-      window.location.reload();
+
+      // Close the modal or perform any other action after update
+      // window.location.reload();
     } catch (error) {
       console.error("Error updating section:", error);
     }
