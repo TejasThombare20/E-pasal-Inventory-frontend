@@ -29,12 +29,16 @@ import NewUnit from "./NewUnit";
 import { FiEdit } from "react-icons/fi";
 import { MdDelete } from "react-icons/md";
 import { setUnits } from "../Redux/unitSlice";
-import { setSectionsReducer } from "../Redux/categorySlice";
+import {
+  setSectionsReducer,
+  setSelectedCategoryReducer,
+  setSelectedSectionReducer,
+  setSelectedSubsectionReducer,
+} from "../Redux/categorySlice";
 const NewProduct = ({ accessToken }) => {
   const dispatch = useDispatch();
   const productData = useSelector((state) => state.product.productList);
   console.log("productData", productData);
-
 
   const CategoryData = useSelector((state) => state.category.categories);
   console.log("CategoryData", CategoryData);
@@ -59,7 +63,7 @@ const NewProduct = ({ accessToken }) => {
     sub_category: "",
     sub_sub_category: "",
     image: "",
-    barcode : "",
+    barcode: "",
     price: "",
     quantity: "",
     description: "",
@@ -74,6 +78,8 @@ const NewProduct = ({ accessToken }) => {
     setIsModalOpen(true);
   };
 
+
+  
   const uploadImage = async (e) => {
     const imageUrl = URL.createObjectURL(e.target.files[0]);
 
@@ -110,7 +116,9 @@ const NewProduct = ({ accessToken }) => {
       const selectedCategoryData = CategoryData.find(
         (category) => category._id === selectedValue
       );
+      console.log("selectedCategoryData", selectedCategoryData);
       setSelectedCategory(selectedValue);
+
       setdata((prevData) => ({
         ...prevData,
         category: selectedCategoryData?.name || "",
@@ -123,15 +131,24 @@ const NewProduct = ({ accessToken }) => {
       setSelectedSubcategory("");
       setSelectedSubsection("");
     } else if (name === "sub_category") {
-      const selectedSectionData = sectionsForSelectedCategory.find(
+      // const selectedSectionData = sectionsForSelectedCategory.find(
+      //   (section) => section._id === selectedValue
+      // );
+      console.log("SectionData",SectionData)
+      const selectedSectionData = SectionData.find(
         (section) => section._id === selectedValue
       );
+
+      console.log("selectedSectionDataName: " ,selectedSectionData.name);
       setSelectedSubcategory(selectedValue);
-      setdata((prevData) => ({
-        ...prevData,
-        sub_category: selectedSectionData?.name || "",
-        sub_sub_category: "", // Reset sub-sub-category when sub-category changes
-      }));
+      // setdata((prevData) => ({
+      //   ...prevData,
+      //   sub_category : selectedSectionData.name,
+      //   // sub_category: selectedSectionData?.name || "",
+      //   sub_sub_category: "", // Reset sub-sub-category when sub-category changes
+      // }));
+         data.sub_category = selectedSectionData.name;
+      console.log("sub_category1 :",data.sub_category)
       const subsectionsForSelectedSection =
         selectedSectionData?.subsections || [];
 
@@ -142,7 +159,7 @@ const NewProduct = ({ accessToken }) => {
       dispatch(setsubsectionsReducer(subsectionsForSelectedSection));
       setSubsectionsForSelectedSection(subsectionsForSelectedSection);
     } else if (name === "sub_sub_category") {
-      const selectedSubsectionValue = selectedValue.value;
+      
       console.log("selectedValue", selectedValue);
 
       // const selectedSubsectionIndex = CategoryData.find(
@@ -209,7 +226,7 @@ const NewProduct = ({ accessToken }) => {
         description: "",
         quantity: "",
         image: "",
-        barcode : "",
+        barcode: "",
         price: "",
       });
     } catch (error) {
@@ -278,8 +295,7 @@ const NewProduct = ({ accessToken }) => {
     // subsectionIndex
     index
   ) => {
-    // console.log("subsectionIndex", subsectionIndex);
-    // Open the UpdateSubsection modal and pass the data as props
+    
     setIsUpdateSubsectionModalOpen(true);
     setSelectedUpdateSubsection({
       categoryId,
@@ -299,7 +315,7 @@ const NewProduct = ({ accessToken }) => {
     fetchUnitsData();
   }, []);
   const unitsData = useSelector((state) => state.units);
-  console.log("unitsData", unitsData);
+  // console.log("unitsData", unitsData);
 
   const [selectedUnitForUpdate, setSelectedUnitForUpdate] = useState(null);
   const handleUpdateUnitClick = (unitId) => {
@@ -391,6 +407,7 @@ const NewProduct = ({ accessToken }) => {
           <Select
             options={CategoryData.map((category) => ({
               value: category._id,
+              
               label: (
                 <div className="flex items-center justify-between">
                   {category.name}
@@ -469,9 +486,10 @@ const NewProduct = ({ accessToken }) => {
               </div>
             ),
           }))}
-          onChange={(selectedOption) =>
-            onChange("sub_category", selectedOption.value)
-          }
+          onChange={(selectedOption) => {
+            onChange("sub_category", selectedOption.value);
+            console.log("sub category :", data.sub_category);
+          }}
           isDisabled={!selectedCategory} // Disable the dropdown if no category is selected
         />
 
@@ -716,9 +734,16 @@ const NewProduct = ({ accessToken }) => {
           />
         ))}
       </div>
-      {isModalOpen && (
+      {/* {isModalOpen && (
         <Modal
           onClose={isModalOpen}
+          product={selectedProductId}
+          // Pass product ID to Modal component
+        />
+      )} */}
+      {isModalOpen && (
+        <Modal
+          onClose={()=>setIsModalOpen(false)}
           product={selectedProductId}
           // Pass product ID to Modal component
         />

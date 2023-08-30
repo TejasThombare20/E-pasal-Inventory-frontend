@@ -9,7 +9,8 @@ import { toast } from "react-hot-toast";
 import api from "../utils/api";
 import { useSelector } from "react-redux";
 import { useDispatch } from "react-redux";
-import {updateProductReducer} from '../Redux/productSlice'
+import { updateProductReducer } from "../Redux/productSlice";
+import { NavLink } from "react-router-dom";
 
 function Modal({ product, onClose }) {
   console.log("product", product);
@@ -17,7 +18,7 @@ function Modal({ product, onClose }) {
   const CategoryData = useSelector((state) => state.category.categories);
   const unitData = useSelector((state) => state.units);
   console.log("unitData", unitData);
-  const dispatch  = useDispatch()
+  const dispatch = useDispatch();
 
   const [data, setdata] = useState({
     u_product_name: "",
@@ -26,6 +27,7 @@ function Modal({ product, onClose }) {
     u_sub_sub_category: "",
     u_description: "",
     u_image: "",
+    u_barcode: "",
     u_quantity: "",
     u_price: "",
   });
@@ -40,6 +42,7 @@ function Modal({ product, onClose }) {
       u_sub_sub_category: "",
       u_description: "",
       u_image: "",
+      u_barcode: "",
       u_quantity: "",
       u_price: "",
     });
@@ -117,6 +120,7 @@ function Modal({ product, onClose }) {
         u_description,
         u_quantity,
         u_image,
+        u_barcode,
         u_price,
       } = data;
       const updatedProduct = {};
@@ -129,6 +133,7 @@ function Modal({ product, onClose }) {
       if (u_quantity) updatedProduct.u_quantity = u_quantity;
       if (u_image) updatedProduct.u_image = u_image;
       if (u_price) updatedProduct.u_price = u_price;
+      if (u_barcode) updatedProduct.u_barcode = u_barcode;
       console.log("updatedProduct", updatedProduct);
 
       // Send the PUT request to update the product
@@ -136,15 +141,16 @@ function Modal({ product, onClose }) {
         `${api}/api/product/updateProduct/${id}`,
         updatedProduct
       );
-      
 
       if (response.status === 200) {
+        const updatedProduct = response.data.product;
         console.log("updatedProduct", updatedProduct);
+        dispatch(updateProductReducer({ id, updatedProduct }));
         // dispatch(updateProductReducer( ))
-        console.log("Product updated:", response.data.product);
-        setOpen(false); // Close the modal after successful update
+        console.log("Product updated:");
+        // setOpen(false); // Close the modal after successful update
         // window.location.reload();
-        
+        onClose();
       } else {
         console.error("Product update failed:", response.data.Message);
       }
@@ -154,14 +160,15 @@ function Modal({ product, onClose }) {
   };
 
   return (
-    <div className="modal">
+    <>
+      {/* <div className="modal">
       <div className="modal-content">
         <Transition.Root show={open} as={Fragment}>
           <Dialog
             as="div"
             className="relative z-10"
             initialFocus={cancelButtonRef}
-            onClose={setOpen}
+           
           >
             <Transition.Child
               as={Fragment}
@@ -319,6 +326,19 @@ function Modal({ product, onClose }) {
                                     />
                                   </div>
                                 </label>
+
+                                <label htmlFor="u_barcode" className="mt-1">
+                                  Barcode :
+                                </label>
+                                <input
+                                  type="text"
+                                  name="u_barcode"
+                                  id="u_barcode"
+                                  value={data.u_barcode}
+                                  onChange={handleChange}
+                                  placeholder={product.barcode}
+                                  className="bg-slate-200 px-2 py-1 my-1"
+                                />
                                 <label htmlFor="u_price" className="mt-1">
                                   Price :
                                 </label>
@@ -332,7 +352,7 @@ function Modal({ product, onClose }) {
                                   className="bg-slate-200 px-2 py-1 my-1"
                                 />
                                 <label htmlFor="u_price" className="mt-1">
-                                  Quantity :
+                                  Unit :
                                 </label>
                                 <select
                                   name="u_quantity"
@@ -374,8 +394,9 @@ function Modal({ product, onClose }) {
                                   <button
                                     type="button"
                                     className="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto"
-                                    onClick={() => handleClose()}
-                                    ref={cancelButtonRef}
+                                    // onClick={() => handleClose()}
+                                       onClick={onClose}
+                                    // ref={cancelButtonRef}
                                   >
                                     Cancel
                                   </button>
@@ -395,7 +416,184 @@ function Modal({ product, onClose }) {
         <button onClick={handleUpdate}>Update</button>
         <button onClick={onClose}>Cancel</button>
       </div>
-    </div>
+    </div> */}
+      <div className="fixed inset-0 flex items-center justify-center">
+        <div className="bg-white w-96 p-6 rounded-lg shadow-lg">
+        <div className="max-h-screen overflow-auto">
+          <h2 className="text-xl font-semibold mb-4">Add New Product</h2>
+          <form
+            className=" m-auto bg-white w-full max-w-md p-4 shadow-lg drop-shadow-md flex flex-col"
+            action=""
+            // onSubmit={handleUpdate}
+          >
+            <label htmlFor="u_product_name" className="mt-1">
+              Name :
+            </label>
+            <input
+              id="u_product_name"
+              type="text"
+              name="u_product_name"
+              value={data.u_product_name}
+              placeholder={product.product_name}
+              onChange={handleChange}
+              className="bg-slate-200 px-2 py-1 my-1"
+            />
+            <label htmlFor="u_category" className="mt-1">
+              Category:
+            </label>
+            <select
+              name="u_category"
+              id="u_category"
+              onChange={handleChange}
+              value={data.u_category}
+              className="bg-slate-200 px-2 py-1 my-1"
+            >
+              <option value="">Select a category</option>
+              {CategoryData.map((category) => (
+                <option key={category._id} value={category.name}>
+                  {category.name}
+                </option>
+              ))}
+            </select>
+
+            <label htmlFor="u_sub_category" className="mt-1">
+              Sub-Category:
+            </label>
+            <select
+              name="u_sub_category"
+              id="u_sub_category"
+              onChange={handleChange}
+              value={data.u_sub_category}
+              className="bg-slate-200 px-2 py-1 my-1"
+            >
+              <option value="">Select a sub-category</option>
+              {subCategories.map((subCategory) => (
+                <option key={subCategory.name} value={subCategory.name}>
+                  {subCategory.name}
+                </option>
+              ))}
+            </select>
+
+            <label htmlFor="u_sub_sub_category" className="mt-1">
+              Sub-Sub-Category:
+            </label>
+            <select
+              name="u_sub_sub_category"
+              id="u_sub_sub_category"
+              onChange={handleChange}
+              value={data.u_sub_sub_category}
+              className="bg-slate-200 px-2 py-1 my-1"
+            >
+              <option value="">Select a sub-sub-category</option>
+              {subSubSections.map((subSubSection) => (
+                <option key={subSubSection} value={subSubSection}>
+                  {subSubSection}
+                </option>
+              ))}
+            </select>
+
+            <label htmlFor="u_image" className="mt-1 cursor-pointer">
+              Image :
+              <div className="h-40 w-full bg-slate-200  my-1 py-1 flex items-center justify-center">
+                {data.u_image ? (
+                  <img
+                    src={data.u_image}
+                    className="h-full"
+                    alt="productImage"
+                  />
+                ) : (
+                  <span className="text-5xl">
+                    <FaUpload />
+                  </span>
+                )}
+
+                <input
+                  type="file"
+                  accept="image/*"
+                  id="u_image"
+                  onChange={uploadImage}
+                  className="hidden"
+                  placeholder={product.image}
+                />
+              </div>
+            </label>
+
+            <label htmlFor="u_barcode" className="mt-1">
+              Barcode :
+            </label>
+            <input
+              type="text"
+              name="u_barcode"
+              id="u_barcode"
+              value={data.u_barcode}
+              onChange={handleChange}
+              placeholder={product.barcode}
+              className="bg-slate-200 px-2 py-1 my-1"
+            />
+            <label htmlFor="u_price" className="mt-1">
+              Price :
+            </label>
+            <input
+              type="text"
+              name="u_price"
+              id="u_price"
+              value={data.u_price}
+              onChange={handleChange}
+              placeholder={product.price}
+              className="bg-slate-200 px-2 py-1 my-1"
+            />
+            <label htmlFor="u_price" className="mt-1">
+              Unit :
+            </label>
+            <select
+              name="u_quantity"
+              id="u_quantity"
+              onChange={handleChange}
+              defaultValue={product.quantity}
+              className="bg-slate-200 px-2 py-1 my-1"
+            >
+              <option value="">Select a category</option>
+              {unitData.map((Unit) => (
+                <option key={Unit._id} value={Unit.name}>
+                  {Unit.name}
+                </option>
+              ))}
+            </select>
+            <label htmlFor="description" className="mt-1">
+              Description :
+            </label>
+            <textarea
+              name="u_description"
+              id="u_description"
+              rows="3"
+              value={data.u_description}
+              onChange={handleChange}
+              className="bg-slate-200 px-2 py-1 my-1 resize-none"
+              placeholder={product.description}
+            ></textarea>
+            <div className="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
+              <button
+                type="button"
+                className="inline-flex w-full justify-center rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 sm:ml-3 sm:w-auto"
+                onClick={(e) => handleUpdate(e)}
+              >
+                save
+              </button>
+              <button
+                type="button"
+                className="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto"
+                // onClick={() => handleClose()}
+                // ref={cancelButtonRef}
+                onClick={onClose}
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+          </div>
+        </div>
+      </div>
+    </>
   );
 }
 

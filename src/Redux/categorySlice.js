@@ -7,7 +7,12 @@ const categorySlice = createSlice({
   initialState: {
     categories: [],
     sections: [],
-    subsections: [],
+    subsections: [], selectedCategory: "", 
+    selectedSection: "",
+    selectedSubsection: "", 
+  
+    
+    
   },
   reducers: {
     setCategories: (state, action) => {
@@ -102,29 +107,36 @@ const categorySlice = createSlice({
       }
     },
 
-   
-    
+    setSelectedCategoryReducer: (state, action) => {
+      state.selectedCategory = action.payload;
+    },
+    setSelectedSectionReducer: (state, action) => {
+      state.selectedSection = action.payload;
+    },
+    setSelectedSubsectionReducer: (state, action) => {
+      state.selectedSubsection = action.payload;
+    },
   },
 });
 
 export const {
   setCategories,
-  addCategory,
-  deleteCategoryReducer,
   setSectionsReducer,
-  addSectionReducer,
-  updateSectionReducer,
-  deleteSectionReducer,
   setsubsectionsReducer,
+  addCategory,
+  addSectionReducer,
   addsubsectionReducer,
-  updatesubsectionReducer,
-  deletesubsectionReducer,
-  setSelectedCategory,
-  setSelectedSection,
-  setSelectedSubsection,
   updateCategoryName,
-  updateSectionName,
-  updateSubsectionName,
+  updateSectionReducer,
+  updatesubsectionReducer,
+  deleteCategoryReducer,
+  deleteSectionReducer,
+  deletesubsectionReducer,
+  setSelectedCategoryReducer,
+  setSelectedSectionReducer,
+  setSelectedSubsectionReducer,
+  
+  
 } = categorySlice.actions;
 
 // Async action to fetch categories
