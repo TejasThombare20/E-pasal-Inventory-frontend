@@ -12,6 +12,7 @@ import { useEffect } from "react";
 import api from "../utils/api.js";
 import Loader from "../Loader";
 import GoogleLogin from "./GoogleLogin";
+import { setAuthToken } from "../Redux/tokenSlice";
 
 const Login = () => {
   let Navigate = useNavigate();
@@ -82,13 +83,14 @@ const Login = () => {
 
       if (json.success) {
         localStorage.setItem("token", json.authtoken);
+        dispatch(setAuthToken(json.authtoken));
         fetchUserData();
         toast("Successfully logged in");
         setTimeout(() => {
           Navigate("/NewProduct");
         }, 1000);
       } else {
-        alert("Invalid credentials");
+        toast("Invalid credentials");
       }
     } catch (error) {
       console.error("Error logging in:", error);

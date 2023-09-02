@@ -1,11 +1,16 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, ChangeEvent, FormEvent } from "react";
+import {} from "tslib";
 import { useSelector, useDispatch } from "react-redux";
 import { FaUpload } from "react-icons/fa";
 import { imageToBase64 } from "../Utility/ImageToBase64";
 import { toast } from "react-hot-toast";
 import Modal from "../Component/Modal";
 import { useNavigate, NavLink } from "react-router-dom";
-import { setCategory, setsubsectionsReducer } from "../Redux/categorySlice";
+import {
+  fetchCategories,
+  setCategory,
+  setsubsectionsReducer,
+} from "../Redux/categorySlice";
 import UpdateCategory from "./UpdateCategory";
 import Category from "./Category";
 import UpdateSection from "./UpdateSection";
@@ -20,9 +25,10 @@ import {
   deleteSection,
   deleteSubsection,
   handleDeleteUnitClick,
+  fetchProducts,
 } from "../FrontendAPI/frontendAPI";
 import UpdateUnit from "./UpdateUnit";
-import { addProductReducer } from "../Redux/productSlice";
+import { addProductReducer, setProductReducer } from "../Redux/productSlice";
 import NewSection from "./NewSection";
 import NewSubsection from "./NewSubsection";
 import NewUnit from "./NewUnit";
@@ -35,6 +41,7 @@ import {
   setSelectedSectionReducer,
   setSelectedSubsectionReducer,
 } from "../Redux/categorySlice";
+import axios from "axios";
 const NewProduct = ({ accessToken }) => {
   const dispatch = useDispatch();
   const productData = useSelector((state) => state.product.productList);
@@ -48,6 +55,9 @@ const NewProduct = ({ accessToken }) => {
 
   const subsectionData = useSelector((state) => state.category.subsections);
   console.log("SubsectionData", subsectionData);
+
+  const SearchData = useSelector((state) => state.search.productList);
+  console.log("SearchData", SearchData);
 
   const [selectedCategory, setSelectedCategory] = useState(""); // Add this line
 
@@ -78,8 +88,6 @@ const NewProduct = ({ accessToken }) => {
     setIsModalOpen(true);
   };
 
-
-  
   const uploadImage = async (e) => {
     const imageUrl = URL.createObjectURL(e.target.files[0]);
 
@@ -134,12 +142,12 @@ const NewProduct = ({ accessToken }) => {
       // const selectedSectionData = sectionsForSelectedCategory.find(
       //   (section) => section._id === selectedValue
       // );
-      console.log("SectionData",SectionData)
+      console.log("SectionData", SectionData);
       const selectedSectionData = SectionData.find(
         (section) => section._id === selectedValue
       );
 
-      console.log("selectedSectionDataName: " ,selectedSectionData.name);
+      console.log("selectedSectionDataName: ", selectedSectionData.name);
       setSelectedSubcategory(selectedValue);
       // setdata((prevData) => ({
       //   ...prevData,
@@ -147,8 +155,8 @@ const NewProduct = ({ accessToken }) => {
       //   // sub_category: selectedSectionData?.name || "",
       //   sub_sub_category: "", // Reset sub-sub-category when sub-category changes
       // }));
-         data.sub_category = selectedSectionData.name;
-      console.log("sub_category1 :",data.sub_category)
+      data.sub_category = selectedSectionData.name;
+      console.log("sub_category1 :", data.sub_category);
       const subsectionsForSelectedSection =
         selectedSectionData?.subsections || [];
 
@@ -159,7 +167,6 @@ const NewProduct = ({ accessToken }) => {
       dispatch(setsubsectionsReducer(subsectionsForSelectedSection));
       setSubsectionsForSelectedSection(subsectionsForSelectedSection);
     } else if (name === "sub_sub_category") {
-      
       console.log("selectedValue", selectedValue);
 
       // const selectedSubsectionIndex = CategoryData.find(
@@ -212,23 +219,32 @@ const NewProduct = ({ accessToken }) => {
         barcode,
         price,
       });
-      console.log("hello");
+      if (newProduct === 1) {
+        toast.error("failed to add product ");
+      } else {
+        const addProductData = newProduct.savedProduct;
+
+        console.log("addProductData", addProductData);
+        dispatch(addProductReducer(addProductData));
+        toast.success("Product added successfully");
+        setdata({
+          product_name: "",
+          category: " ",
+          sub_category: "",
+          sub_sub_category: "",
+          description: "",
+          quantity: "",
+          image: "",
+          barcode: "",
+          price: "",
+        });
+
+        setSelectedCategory(null); // Reset selected category
+        setSelectedSubcategory(null); // Reset selected sub-category
+        setSelectedSubsection(null); // Reset selected sub-sub-category
+        setSelectedUnitForUpdate(null); // Reset selected unit
+      }
       // dispatch(setDataProduct([...productData, newProduct]));
-      const addProductData = newProduct.savedProduct;
-      console.log("addProductData", addProductData);
-      dispatch(addProductReducer(addProductData));
-      toast("Product added successfully");
-      setdata({
-        product_name: "",
-        category: " ",
-        sub_category: "",
-        sub_sub_category: "",
-        description: "",
-        quantity: "",
-        image: "",
-        barcode: "",
-        price: "",
-      });
     } catch (error) {
       console.error("Error adding product:", error.message);
     }
@@ -295,7 +311,6 @@ const NewProduct = ({ accessToken }) => {
     // subsectionIndex
     index
   ) => {
-    
     setIsUpdateSubsectionModalOpen(true);
     setSelectedUpdateSubsection({
       categoryId,
@@ -344,32 +359,94 @@ const NewProduct = ({ accessToken }) => {
     setIsAddUnitOpen(false);
   };
 
-  // const [driveImageLink, setDriveImageLink] = useState("");
+  const [page, setPage] = useState(1);
+  useEffect(() => {
+    fetchProducts(dispatch, page);
+  }, [page]);
 
-  // const handleImageUpload = async () => {
-  //   const formData = new FormData();
-  //   formData.append("image", image);
+  useEffect(() => {
+    dispatch(fetchCategories()); // Dispatch the async action to fetch categories
+  }, [dispatch]);
 
-  //   try {
-  //     await axios.post(
-  //       `${api}/api/uploadimage/upload`,
-  //       formData,
-  //       {
-  //         headers: {
-  //           "Content-Type": "multipart/form-data",
-  //           Authorization: `Bearer ${accessToken}`,
-  //         },
-  //       }
-  //     );
+  const handleLoadMore = () => {
+    const productDataTotalPages = productData.length / 10;
+    if (page <= productDataTotalPages) {
+      setPage((prevPage) => prevPage + 1);
+    } else {
+      toast.error("product items is over");
+    }
+  };
+  const handlebackpage = () => {
+    if (page !== 1) {
+      setPage((prevPage) => prevPage - 1);
+    } else {
+      toast.error("you are on first page");
+    }
+  };
 
-  //     // Handle success
-  //   } catch (error) {
-  //     console.log(error)
-  //   }
-  // }
+  // const handleImageSubmit = async (e: any) => {
+  //   e.preventDefault();
+  //   let formData = new FormData();
+  //   formData.append("file", file.data);
+  //   const response = await axios.post(
+  //     "http://localhost:5000/api/uploadimage",
+  //     formData
+  //   );
+  //   const responseWithBody = await response.data;
+  //   if (response) setUrl(responseWithBody.publicUrl);
+  // };
+
+  // const handleFileChange = (e: any) => {
+  //   const img = {
+  //     preview: URL.createObjectURL(e.target.files[0]),
+  //     data: e.target.files[0],
+  //   };
+  //   setFile(img);
+  // };
+
+  const [url, setUrl] = useState("");
+  const [file, setFile] = useState(null);
+
+  const handleImageSubmit = async (e) => {
+    e.preventDefault();
+    console.log("file : -",file)
+    if (file) {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      console.log("formData", formData);
+
+      try {
+        const response = await axios.post(
+          "http://localhost:5000/api/uploadimage",
+          formData
+        );
+        setUrl(response.data.publicUrl);
+      } catch (error) {
+        console.error("Error uploading image:", error);
+      }
+    }
+  };
+
+  const handleFileChange = (e) => {
+    const selectedFile = e.target.files[0];
+    console.log("selectedFile:", selectedFile)
+    if (selectedFile) {
+      const img = {
+        preview: URL.createObjectURL(selectedFile),
+        data: selectedFile,
+      };
+      setFile(img);
+    }
+    
+  };
 
   return (
     <div className="  p-4 ">
+      <form onSubmit={handleImageSubmit}>
+        <input type="file" name="file" onChange={handleFileChange}></input>
+        <button type="submit">Submit</button>
+      </form>
       <form
         className=" m-auto bg-white w-full max-w-md  p-4 shadow-lg drop-shadow-md flex flex-col"
         action=""
@@ -383,6 +460,7 @@ const NewProduct = ({ accessToken }) => {
           type="text"
           name="product_name"
           value={data.product_name}
+          required
           onChange={(e) => onChange("product_name", e.target.value)}
           className="bg-slate-200 px-2 py-1 my-1"
         />
@@ -407,7 +485,7 @@ const NewProduct = ({ accessToken }) => {
           <Select
             options={CategoryData.map((category) => ({
               value: category._id,
-              
+
               label: (
                 <div className="flex items-center justify-between">
                   {category.name}
@@ -428,6 +506,7 @@ const NewProduct = ({ accessToken }) => {
                 </div>
               ),
             }))}
+            required
             onChange={(selectedOption) =>
               onChange("category", selectedOption.value)
             }
@@ -486,6 +565,7 @@ const NewProduct = ({ accessToken }) => {
               </div>
             ),
           }))}
+          required
           onChange={(selectedOption) => {
             onChange("sub_category", selectedOption.value);
             console.log("sub category :", data.sub_category);
@@ -594,6 +674,7 @@ const NewProduct = ({ accessToken }) => {
           name="image"
           id="image"
           value={data.image}
+          required
           onChange={(e) => onChange("image", e.target.value)}
           className="bg-slate-200 px-2 py-1 my-1"
         />
@@ -633,6 +714,7 @@ const NewProduct = ({ accessToken }) => {
           name="barcode"
           id="barcode"
           value={data.barcode}
+          required
           onChange={(e) => onChange("barcode", e.target.value)}
           className="bg-slate-200 px-2 py-1 my-1"
         />
@@ -645,6 +727,7 @@ const NewProduct = ({ accessToken }) => {
           name="price"
           id="price"
           value={data.price}
+          required
           onChange={(e) => onChange("price", e.target.value)}
           className="bg-slate-200 px-2 py-1 my-1"
         />
@@ -693,6 +776,7 @@ const NewProduct = ({ accessToken }) => {
               </div>
             ),
           }))}
+          required
           onChange={(selectedOption) =>
             onChange("quantity", selectedOption.label.props.children[0])
           }
@@ -713,12 +797,27 @@ const NewProduct = ({ accessToken }) => {
         <div className="flex justify-center">
           <button
             type="submit"
-            className=" w-fit  bg-blue-500 px-2 py-1 my-1 rounded-md"
+            className="bg-gradient-to-b font-semibold text-white from-cyan-500 to-blue-500 rounded-md px-4 py-2"
           >
             Submit
           </button>
         </div>
       </form>
+
+      <p className="text-3xl font-semibold py-10">SearchPoduct : </p>
+
+      <div className="flex flex-wrap gap-6 pt-6">
+        {SearchData.map((product) => (
+          <ProductItem
+            key={product._id}
+            product={product}
+            expandedProducts={expandedProducts}
+            toggleDescription={toggleDescription}
+            deleteProduct={deleteProduct}
+            handleUpdateClick={handleUpdateClick}
+          />
+        ))}
+      </div>
 
       <p className="text-3xl font-semibold py-10">Product List : </p>
 
@@ -734,16 +833,24 @@ const NewProduct = ({ accessToken }) => {
           />
         ))}
       </div>
-      {/* {isModalOpen && (
-        <Modal
-          onClose={isModalOpen}
-          product={selectedProductId}
-          // Pass product ID to Modal component
-        />
-      )} */}
+      <div className="flex justify-evenly items-center  my-5">
+        <button
+          className="bg-gradient-to-b font-semibold text-white from-cyan-500 to-blue-500 rounded-md px-4 py-2"
+          onClick={handlebackpage}
+        >
+          Load back
+        </button>
+        <button
+          className="bg-gradient-to-b font-semibold text-white from-cyan-500 to-blue-500 rounded-md px-4 py-2"
+          onClick={handleLoadMore}
+        >
+          Load More
+        </button>
+      </div>
+
       {isModalOpen && (
         <Modal
-          onClose={()=>setIsModalOpen(false)}
+          onClose={() => setIsModalOpen(false)}
           product={selectedProductId}
           // Pass product ID to Modal component
         />

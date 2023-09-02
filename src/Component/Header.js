@@ -11,6 +11,9 @@ import { useEffect } from "react";
 import axios from "axios";
 import api from "../utils/api";
 import { loginRedux } from "../Redux/userSlice";
+import { clearAuthToken } from "../Redux/tokenSlice";
+import { setSearchDataReducer } from "../Redux/searchSlice";
+import { FcSearch } from "react-icons/fc";
 
 const Header = () => {
   const [showmenu, setmenu] = useState(false);
@@ -24,18 +27,18 @@ const Header = () => {
   const handleshowmenu = () => {
     setmenu((prev) => !prev);
     console.log(userData.email);
-    
   };
   const logoutClick = () => {
     dispatch(logoutRedux());
     toast("logout successfully");
     localStorage.removeItem("token");
+    dispatch(clearAuthToken());
     Navigate("/");
   };
 
+  const token = localStorage.getItem("token");
   useEffect(() => {
     // Check for token and fetch user data
-    const token = localStorage.getItem("token");
     if (token) {
       const fetchUserData = async () => {
         try {
@@ -59,7 +62,31 @@ const Header = () => {
       fetchUserData();
     }
   }, [dispatch]);
-  const cardItemNumber = useSelector((state) => state.product.cartItem);
+
+  const [query, setQuery] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+
+  const handleSearch = async () => {
+    if (!query) {
+      // If the search query is empty, don't perform any search
+      setSearchResults([]);
+      return;
+    }
+    try {
+      const response = await axios.get(
+        `${api}/api/product/search?query=${query}`
+      );
+
+      if (response.status === 200) {
+        const responseData = response.data;
+        dispatch(setSearchDataReducer(responseData));
+      }
+      setSearchResults(response.data);
+    } catch (error) {
+      console.error("Error fetching search results:", error);
+    }
+  };
+
   return (
     <header className=" shadow-md w-full h-16 px-2">
       <div className=" flex  justify-between  items-center h-full ">
@@ -69,41 +96,60 @@ const Header = () => {
             e-Pasal{" "}
           </div>
         </Link>
-        <div className="flex items-center gap-4 md:gap-7">
-         
-          <div className=" cursor-pointer " onClick={handleshowmenu}>
-            <div className="relative text-2xl text-slate-600 h-10 w-10 p-2 rounded-full overflow-hidden border border-black ">
-              {userData.image ? (
-                <img
-                  src={userData.image}
-                  alt="user pic"
-                  className="h-full w-full"
-                />
-              ) : (
-                <FaUserAlt />
+        <div className="flex justify-center items-center gap-8">
+          {token && (
+            <div className="flex justify-center items-center gap-2">
+              <input
+                type="text"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search products..."
+                className="bg-slate-200 border border-blue-200 rounded-md px-5 py-1 mx-2 hover:border-2  hover:border-blue-500 hover:bg-slate-100 "
+              />
+
+              <button
+                className="bg-slate-100 rounded-md  p-1 hover:scale-110 "
+                onClick={handleSearch}
+              >
+                <FcSearch size={30} />
+              </button>
+            </div>
+          )}
+
+          <div className="flex items-center gap-4 md:gap-7">
+            <div className=" cursor-pointer " onClick={handleshowmenu}>
+              <div className="relative text-2xl text-slate-600 h-10 w-10 p-2 rounded-full overflow-hidden border border-black ">
+                {userData.image ? (
+                  <img
+                    src={userData.image}
+                    alt="user pic"
+                    className="h-full w-full"
+                  />
+                ) : (
+                  <FaUserAlt />
+                )}
+              </div>
+              {showmenu && (
+                <div className=" px-3 py-3 w-48 bg-white  text-center shadow-md absolute top-12 right-0 flex flex-col gap-3">
+                  {/* {userData.email === adminID && (<Link to="/NewProduct" className='whitespace-nowrap'>New Product</Link>)} */}
+
+                  {userData.image ? (
+                    <button
+                      className=" whitespace-nowrap rounded-sm p-1 my-1"
+                      onClick={logoutClick}
+                    >
+                      {" "}
+                      Logout {userData.first_name}
+                    </button>
+                  ) : (
+                    <Link to="/" className="whitespace-nowrap">
+                      {" "}
+                      Login
+                    </Link>
+                  )}
+                </div>
               )}
             </div>
-            {showmenu && (
-              <div className=" px-3 py-3 w-48 bg-white  text-center shadow-md absolute top-12 right-0 flex flex-col gap-3">
-                {/* {userData.email === adminID && (<Link to="/NewProduct" className='whitespace-nowrap'>New Product</Link>)} */}
-
-                {userData.image ? (
-                  <button
-                    className=" whitespace-nowrap rounded-sm p-1 my-1"
-                    onClick={logoutClick}
-                  >
-                    {" "}
-                    Logout {userData.first_name}
-                  </button>
-                ) : (
-                  <Link to="/" className="whitespace-nowrap">
-                    {" "}
-                    Login
-                  </Link>
-                )}
-               
-              </div>
-            )}
           </div>
         </div>
       </div>

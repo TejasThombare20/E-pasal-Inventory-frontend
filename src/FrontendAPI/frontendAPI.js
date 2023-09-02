@@ -3,11 +3,49 @@ import api from "../utils/api";
 import toast from "react-hot-toast";
 import { useDispatch } from "react-redux";
 import { deleteUnit } from "../Redux/unitSlice";
-import { deleteCategoryReducer , deleteSectionReducer, deletesubsectionReducer } from "../Redux/categorySlice";
-import { deleteProductReducer } from "../Redux/productSlice";
+import {
+  deleteCategoryReducer,
+  deleteSectionReducer,
+  deletesubsectionReducer,
+} from "../Redux/categorySlice";
+import { deleteProductReducer, setProductReducer } from "../Redux/productSlice";
+
 // Replace with your backend API URL
 
 // Add New product
+
+export const validateProductFields = ({
+  product_name,
+  category,
+  sub_category,
+  sub_sub_category,
+  description,
+  quantity,
+  barcode,
+  image,
+  price,
+}) => {
+  const fields = [
+    { value: product_name, name: "product name" },
+    { value: category, name: "category" },
+    { value: sub_category, name: "sub-category" },
+    { value: sub_sub_category, name: "sub-sub-category" },
+    { value: description, name: "description" },
+    { value: quantity, name: "quantity" },
+    { value: barcode, name: "barcode" },
+    { value: image, name: "image" },
+    { value: price, name: "price" },
+  ];
+
+  const missingFields = fields.filter((field) => !field.value);
+  if (missingFields.length > 0) {
+    const missingNames = missingFields.map((field) => field.name).join(", ");
+    toast.error(`Missing attributes: ${missingNames}`);
+    return false;
+  }
+
+  return true; // All fields are valid
+};
 
 export const addProduct = async ({
   product_name,
@@ -20,6 +58,21 @@ export const addProduct = async ({
   image,
   price,
 }) => {
+  // if (
+  //   !validateProductFields({
+  //     product_name,
+  //     category,
+  //     sub_category,
+  //     sub_sub_category,
+  //     description,
+  //     quantity,
+  //     barcode,
+  //     image,
+  //     price,
+  //   })
+  // ) {
+  //   return 1; // Return early if validation fails
+  // }
   try {
     const response = await axios.post(
       `${api}/api/product/addProduct`,
@@ -49,7 +102,7 @@ export const addProduct = async ({
 };
 
 // delete Product
-export const deleteProduct = async (productID, e ,dispatch) => {
+export const deleteProduct = async (productID, e, dispatch) => {
   const confirmDelete = window.confirm(
     "Are you sure you want to delete this product ?"
   );
@@ -59,13 +112,11 @@ export const deleteProduct = async (productID, e ,dispatch) => {
       const response = await axios.delete(
         `${api}/api/product/deleteProduct/${productID}`
       );
-       console.log("response", response)
+      console.log("response", response);
 
       if (response.status === 200) {
-
-        dispatch(deleteProductReducer(productID))
+        dispatch(deleteProductReducer(productID));
         toast("Product deleted successfully");
-        
       } else {
         console.log("Unexpected response:", response.status, response.data);
       }
@@ -108,7 +159,7 @@ export const updateUnit = async (unitId, newName) => {
 };
 
 // delete the category
-export const deleteCategory = async (categoryId,dispatch) => {
+export const deleteCategory = async (categoryId, dispatch) => {
   const confirmDelete = window.confirm(
     "Are you sure you want to delete this category?"
   );
@@ -118,9 +169,8 @@ export const deleteCategory = async (categoryId,dispatch) => {
         `${api}/api/category/categories/${categoryId}`
       );
       if (response.status === 200) {
-        dispatch(deleteCategoryReducer(categoryId))
+        dispatch(deleteCategoryReducer(categoryId));
         toast("Category deleted successfully");
-        
 
         // window.location.reload();
         // You might want to refresh the data or update the Redux state after deletion
@@ -134,7 +184,7 @@ export const deleteCategory = async (categoryId,dispatch) => {
 };
 
 // deletion of the section
-export const deleteSection = async (categoryId, sectionId,dispatch) => {
+export const deleteSection = async (categoryId, sectionId, dispatch) => {
   const confirmDelete = window.confirm(
     "Are you sure you want to delete this section?"
   );
@@ -144,9 +194,8 @@ export const deleteSection = async (categoryId, sectionId,dispatch) => {
         `${api}/api/category/${categoryId}/sections/${sectionId}`
       );
       if (response.status === 200) {
-        
         toast("Section deleted successfully");
-        dispatch(deleteSectionReducer(sectionId))
+        dispatch(deleteSectionReducer(sectionId));
         // window.location.reload();
         // You might want to refresh the data or update the Redux state after deletion
       } else {
@@ -176,9 +225,8 @@ export const deleteSubsection = async (
         `${api}/api/category/${categoryId}/sections/${sectionId}/subsections/${subsectionIndex}`
       );
       if (response.status === 200) {
-         dispatch(deletesubsectionReducer(subsectionIndex))
+        dispatch(deletesubsectionReducer(subsectionIndex));
         toast("Subsection deleted successfully");
-        
       } else {
         console.log("Unexpected response:", response.status, response.data);
       }
@@ -188,19 +236,17 @@ export const deleteSubsection = async (
   }
 };
 
-export const handleDeleteUnitClick = async (unitId,dispatch) => {
-  
+export const handleDeleteUnitClick = async (unitId, dispatch) => {
   // const dispatch = useDispatch();
   const confirmDelete = window.confirm(
     "Are you sure you want to delete this unit?"
-    );
+  );
   if (confirmDelete) {
     try {
       const response = await axios.delete(
         `${api}/api/unit/deleteUnit/${unitId}`
       );
       if (response.status === 200) {
-        
         toast("Unit deleted successfully");
         dispatch(deleteUnit(unitId));
       } else {
@@ -210,5 +256,20 @@ export const handleDeleteUnitClick = async (unitId,dispatch) => {
     } catch (error) {
       console.error("Error deleting unit:", error.message);
     }
+  }
+};
+
+export const fetchProducts = async (dispatch, page) => {
+  try {
+    const response = await axios.get(`${api}/api/product/fetchAllProduct`, {
+      params: { page }, // Send the current page as a parameter
+    });
+    const newProducts = response.data.products;
+    console.log("newProducts", newProducts);
+
+    dispatch(setProductReducer(newProducts));
+    // setProducts((prevProducts) => [...prevProducts, ...newProducts]);
+  } catch (error) {
+    console.error("Error fetching products:", error);
   }
 };
