@@ -34,10 +34,10 @@ function App() {
 
   return (
       <>
-    <div >
+    <div className=''>
         <Router>
           <Toaster />
-          <div className="bg-white sticky top-0 right-0 left-0 z-50">
+          <div className=" sticky w-full top-0 right-0 left-0 z-50">
           <Header />
           </div>
           <div >

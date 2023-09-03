@@ -14,39 +14,26 @@ import { deleteProductReducer, setProductReducer } from "../Redux/productSlice";
 
 // Add New product
 
-export const validateProductFields = ({
-  product_name,
-  category,
-  sub_category,
-  sub_sub_category,
-  description,
-  quantity,
-  barcode,
-  image,
-  price,
-}) => {
-  const fields = [
-    { value: product_name, name: "product name" },
-    { value: category, name: "category" },
-    { value: sub_category, name: "sub-category" },
-    { value: sub_sub_category, name: "sub-sub-category" },
-    { value: description, name: "description" },
-    { value: quantity, name: "quantity" },
-    { value: barcode, name: "barcode" },
-    { value: image, name: "image" },
-    { value: price, name: "price" },
-  ];
+export const handleImageSubmit = async (e, file) => {
+  e.preventDefault();
+  console.log("file :", file);
+  if (file) {
+    const formData = new FormData();
+    formData.append("file", file);
 
-  const missingFields = fields.filter((field) => !field.value);
-  if (missingFields.length > 0) {
-    const missingNames = missingFields.map((field) => field.name).join(", ");
-    toast.error(`Missing attributes: ${missingNames}`);
-    return false;
+    console.log("formData", formData);
+
+    try {
+      const response = await axios.post(
+        "http://localhost:5000/api/uploadimage",
+        formData
+      );
+      // setUrl(response.data.publicUrl);
+    } catch (error) {
+      console.error("Error uploading image:", error);
+    }
   }
-
-  return true; // All fields are valid
 };
-
 export const addProduct = async ({
   product_name,
   category,
@@ -57,23 +44,33 @@ export const addProduct = async ({
   barcode,
   image,
   price,
+  file,
 }) => {
-  // if (
-  //   !validateProductFields({
-  //     product_name,
-  //     category,
-  //     sub_category,
-  //     sub_sub_category,
-  //     description,
-  //     quantity,
-  //     barcode,
-  //     image,
-  //     price,
-  //   })
-  // ) {
-  //   return 1; // Return early if validation fails
-  // }
   try {
+    
+    console.log("file :", file);
+    if (file) {
+      const formData = new FormData();
+      formData.append("file", file.data);
+
+      console.log("formData", formData);
+
+      try {
+        const response = await axios.post(
+          "http://localhost:5000/api/uploadimage",
+          formData
+        );
+        // setUrl(response.data.publicUrl);
+        const publicUrl = response.data.publicUrl
+        console.log("publicUrl :", publicUrl);
+         image  = publicUrl ; 
+      
+         console.log("image :", image)
+      } catch (error) {
+        console.error("Error uploading image:", error);
+      }
+    }
+
     const response = await axios.post(
       `${api}/api/product/addProduct`,
       JSON.stringify({
@@ -259,16 +256,26 @@ export const handleDeleteUnitClick = async (unitId, dispatch) => {
   }
 };
 
-export const fetchProducts = async (dispatch, page) => {
+let accumulatedProducts = [];
+export const fetchProducts = async (dispatch, page, productData ) => {
+
+
   try {
     const response = await axios.get(`${api}/api/product/fetchAllProduct`, {
-      params: { page }, // Send the current page as a parameter
+      params: { page },
     });
     const newProducts = response.data.products;
     console.log("newProducts", newProducts);
+    // const currentProducts = useSelector((state) => state.product.productList);
+    // const updatedProducts = [...productData, ...newProducts];
+    // setisProdctData((prevProducts) => [...prevProducts, ...newProducts]);
+    // console.log("isProdctData", isProdctData);
 
-    dispatch(setProductReducer(newProducts));
-    // setProducts((prevProducts) => [...prevProducts, ...newProducts]);
+    // accumulatedProducts.push(newProducts);
+    // console.log("accumulatedProducts", accumulatedProducts)
+    
+
+    dispatch(setProductReducer([...productData, ...newProducts]));
   } catch (error) {
     console.error("Error fetching products:", error);
   }

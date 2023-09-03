@@ -35,13 +35,10 @@ import NewUnit from "./NewUnit";
 import { FiEdit } from "react-icons/fi";
 import { MdDelete } from "react-icons/md";
 import { setUnits } from "../Redux/unitSlice";
-import {
-  setSectionsReducer,
-  setSelectedCategoryReducer,
-  setSelectedSectionReducer,
-  setSelectedSubsectionReducer,
-} from "../Redux/categorySlice";
-import axios from "axios";
+import { setSectionsReducer } from "../Redux/categorySlice";
+import '../custom.css'
+
+
 const NewProduct = ({ accessToken }) => {
   const dispatch = useDispatch();
   const productData = useSelector((state) => state.product.productList);
@@ -58,6 +55,8 @@ const NewProduct = ({ accessToken }) => {
 
   const SearchData = useSelector((state) => state.search.productList);
   console.log("SearchData", SearchData);
+
+ 
 
   const [selectedCategory, setSelectedCategory] = useState(""); // Add this line
 
@@ -88,17 +87,6 @@ const NewProduct = ({ accessToken }) => {
     setIsModalOpen(true);
   };
 
-  const uploadImage = async (e) => {
-    const imageUrl = URL.createObjectURL(e.target.files[0]);
-
-    setdata((preve) => {
-      return {
-        ...preve,
-        image: imageUrl,
-      };
-    });
-  };
-
   const [expandedProducts, setExpandedProducts] = useState([]);
 
   const toggleDescription = (productId) => {
@@ -109,15 +97,16 @@ const NewProduct = ({ accessToken }) => {
     }
   };
 
-  function convertDriveLinkToDirectLink(driveLink) {
-    const fileIdMatch = driveLink.match(/\/d\/([a-zA-Z0-9_-]+)\//);
-    if (fileIdMatch && fileIdMatch[1]) {
-      const fileId = fileIdMatch[1];
-      return `https://drive.google.com/uc?export=view&id=${fileId}`;
-    } else {
-      return driveLink;
-    }
-  }
+  // function convertDriveLinkToDirectLink(driveLink) {
+  //   const fileIdMatch = driveLink.match(/\/d\/([a-zA-Z0-9_-]+)\//);
+  //   if (fileIdMatch && fileIdMatch[1]) {
+  //     const fileId = fileIdMatch[1];
+  //     return `https://drive.google.com/uc?export=view&id=${fileId}`;
+  //   } else {
+  //     return driveLink;
+  //   }
+  // }
+  const [file, setFile] = useState(null);
   const onChange = (name, selectedValue) => {
     console.log("Selected value:", selectedValue);
     if (name === "category") {
@@ -180,11 +169,14 @@ const NewProduct = ({ accessToken }) => {
         sub_sub_category: selectedValue,
       }));
     } else if (name === "image") {
-      const convertedImageLink = convertDriveLinkToDirectLink(selectedValue);
-      setdata((prevData) => ({
-        ...prevData,
-        [name]: convertedImageLink,
-      }));
+      console.log("selectedValue:", selectedValue);
+      if (selectedValue) {
+        const img = {
+          preview: URL.createObjectURL(selectedValue),
+          data: selectedValue,
+        };
+        setFile(img);
+      }
     } else {
       setdata((prevData) => ({
         ...prevData,
@@ -193,7 +185,10 @@ const NewProduct = ({ accessToken }) => {
     }
   };
 
+  const [isSubmitted, setIsSubmitted] = useState(false);
+
   const handleSubmit = async (e) => {
+    setIsSubmitted(true);
     e.preventDefault();
     const {
       product_name,
@@ -218,6 +213,7 @@ const NewProduct = ({ accessToken }) => {
         image,
         barcode,
         price,
+        file,
       });
       if (newProduct === 1) {
         toast.error("failed to add product ");
@@ -238,11 +234,13 @@ const NewProduct = ({ accessToken }) => {
           barcode: "",
           price: "",
         });
+        setFile(null)
 
         setSelectedCategory(null); // Reset selected category
         setSelectedSubcategory(null); // Reset selected sub-category
         setSelectedSubsection(null); // Reset selected sub-sub-category
         setSelectedUnitForUpdate(null); // Reset selected unit
+        setIsSubmitted(false);
       }
       // dispatch(setDataProduct([...productData, newProduct]));
     } catch (error) {
@@ -359,9 +357,14 @@ const NewProduct = ({ accessToken }) => {
     setIsAddUnitOpen(false);
   };
 
+
   const [page, setPage] = useState(1);
+//   const [isProdctData, setisProdctData] = useState([])
+
+// setisProdctData(productData);
+// console.log("previous isProdctData", isProdctData);
   useEffect(() => {
-    fetchProducts(dispatch, page);
+    fetchProducts(dispatch, page , productData );
   }, [page]);
 
   useEffect(() => {
@@ -383,72 +386,31 @@ const NewProduct = ({ accessToken }) => {
       toast.error("you are on first page");
     }
   };
-
-  // const handleImageSubmit = async (e: any) => {
-  //   e.preventDefault();
-  //   let formData = new FormData();
-  //   formData.append("file", file.data);
-  //   const response = await axios.post(
-  //     "http://localhost:5000/api/uploadimage",
-  //     formData
-  //   );
-  //   const responseWithBody = await response.data;
-  //   if (response) setUrl(responseWithBody.publicUrl);
-  // };
-
-  // const handleFileChange = (e: any) => {
-  //   const img = {
-  //     preview: URL.createObjectURL(e.target.files[0]),
-  //     data: e.target.files[0],
-  //   };
-  //   setFile(img);
-  // };
-
-  const [url, setUrl] = useState("");
-  const [file, setFile] = useState(null);
-
-  const handleImageSubmit = async (e) => {
-    e.preventDefault();
-    console.log("file : -",file)
-    if (file) {
-      const formData = new FormData();
-      formData.append("file", file);
-
-      console.log("formData", formData);
-
-      try {
-        const response = await axios.post(
-          "http://localhost:5000/api/uploadimage",
-          formData
-        );
-        setUrl(response.data.publicUrl);
-      } catch (error) {
-        console.error("Error uploading image:", error);
-      }
-    }
+  const formStyle = {
+    backgroundColor: "rgba(255, 255, 255, 0.8)",
   };
 
-  const handleFileChange = (e) => {
-    const selectedFile = e.target.files[0];
-    console.log("selectedFile:", selectedFile)
-    if (selectedFile) {
-      const img = {
-        preview: URL.createObjectURL(selectedFile),
-        data: selectedFile,
-      };
-      setFile(img);
-    }
-    
+  const customStyles = {
+    control: (provided) => ({
+      ...provided,
+      backgroundColor: 'rgba(125, 211 ,252)', // Set the background color for the control (input)
+    }),
+    dropdownIndicator: (provided) => ({
+      ...provided,
+      color: "pink", // Set the color of the dropdown indicator (the arrow)
+    }),
+    option: (provided) => ({
+      ...provided,
+      backgroundColor: 'rgba(186, 230, 253)', // Set the background color of each option
+    }),
   };
 
   return (
-    <div className="  p-4 ">
-      <form onSubmit={handleImageSubmit}>
-        <input type="file" name="file" onChange={handleFileChange}></input>
-        <button type="submit">Submit</button>
-      </form>
+    <div className="min-w-full bg-gradient-to-l from-teal-500 to-blue-500">
       <form
-        className=" m-auto bg-white w-full max-w-md  p-4 shadow-lg drop-shadow-md flex flex-col"
+        //  style={formStyle}
+        className={`p-4 m-auto   w-full max-w-md shadow-xl drop-shadow-2xl flex flex-col rounded-md  ${isSubmitted ? 'glow-border' : ''}`}
+       
         action=""
         onSubmit={handleSubmit}
       >
@@ -462,7 +424,7 @@ const NewProduct = ({ accessToken }) => {
           value={data.product_name}
           required
           onChange={(e) => onChange("product_name", e.target.value)}
-          className="bg-slate-200 px-2 py-1 my-1"
+          className="bg-sky-300 focus:bg-sky-200 px-2 py-1 my-1 rounded-md hover:border-2 hover:border-pink-500 focus:border-2 focus:outline-none focus:border-pink-500"
         />
 
         {/* Category Dropdown */}
@@ -483,11 +445,12 @@ const NewProduct = ({ accessToken }) => {
         )}
         {CategoryData && (
           <Select
+          styles={customStyles}
             options={CategoryData.map((category) => ({
               value: category._id,
 
               label: (
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between  ">
                   {category.name}
                   <div className="flex gap-2">
                     <NavLink
@@ -541,6 +504,7 @@ const NewProduct = ({ accessToken }) => {
         )}
 
         <Select
+        styles={customStyles}
           options={SectionData.map((section) => ({
             value: section._id,
             label: (
@@ -606,6 +570,7 @@ const NewProduct = ({ accessToken }) => {
         )}
 
         <Select
+        styles={customStyles}
           options={
             // selectedSubcategory
             //   ? sectionsForSelectedCategory
@@ -667,28 +632,13 @@ const NewProduct = ({ accessToken }) => {
         )}
 
         <label htmlFor="image" className="mt-1 cursor-pointer">
-          Image Link
-        </label>
-        <input
-          type="text"
-          name="image"
-          id="image"
-          value={data.image}
-          required
-          onChange={(e) => onChange("image", e.target.value)}
-          className="bg-slate-200 px-2 py-1 my-1"
-        />
-        {data.image && (
-          <div className="h-40 w-full bg-slate-200  my-1 py-1 flex items-center justify-center">
-            <img src={data.image} className="h-full" alt="productImage" />
-          </div>
-        )}
-
-        {/* <label htmlFor="image" className="mt-1 cursor-pointer">
           Image :
-          <div className="h-40 w-full bg-slate-200  my-1 py-1 flex items-center justify-center">
-            {data.image ? (
-              <img src={data.image} className="h-full" alt="productImage" />
+          <div
+            className="h-40 w-full  flex items-center justify-center  bg-sky-300 focus:bg-sky-200 px-2 py-1 my-1 rounded-md hover:border-2 hover:border-pink-500 focus:border-2 focus:outline-none focus:border-pink-500
+"
+          >
+            {file ? (
+              <img src={file.preview} className="h-full" alt="productImage" />
             ) : (
               <span className="text-5xl">
                 <FaUpload />
@@ -697,14 +647,15 @@ const NewProduct = ({ accessToken }) => {
 
             <input
               type="file"
+              name="file"
               accept="image/*"
               id="image"
-              onChange={(e) => setImage(e.target.files[0])}
+              required
+              onChange={(e) => onChange("image", e.target.files[0])}
               className="hidden"
             />
-            <NavLink onClick={handleImageUpload}>Upload</NavLink>
           </div>
-        </label> */}
+        </label>
 
         <label htmlFor="barcode" className="mt-1">
           Barcode :
@@ -716,7 +667,7 @@ const NewProduct = ({ accessToken }) => {
           value={data.barcode}
           required
           onChange={(e) => onChange("barcode", e.target.value)}
-          className="bg-slate-200 px-2 py-1 my-1"
+          className=" bg-sky-300 focus:bg-sky-200 px-2 py-1 my-1 rounded-md hover:border-2 hover:border-pink-500 focus:border-2 focus:outline-none focus:border-pink-500"
         />
 
         <label htmlFor="price" className="mt-1">
@@ -729,7 +680,7 @@ const NewProduct = ({ accessToken }) => {
           value={data.price}
           required
           onChange={(e) => onChange("price", e.target.value)}
-          className="bg-slate-200 px-2 py-1 my-1"
+          className=" bg-sky-300 focus:bg-sky-200 px-2 py-1 my-1 rounded-md hover:border-2 hover:border-pink-500 focus:border-2 focus:outline-none focus:border-pink-500"
         />
 
         <div className="flex justify-start items-center gap-52 my-2">
@@ -746,14 +697,15 @@ const NewProduct = ({ accessToken }) => {
         {isAddUnitOpen && <NewUnit onClose={handleCloseAddUnit} />}
 
         {selectedUnitForUpdate && (
-          <UpdateUnit
+          <UpdateUnit 
             unitId={selectedUnitForUpdate._id}
             onClose={() => setSelectedUnitForUpdate(null)}
             // updateUnitCallback={handleUnitUpdate}
           />
         )}
-
+        
         <Select
+        styles={customStyles}
           options={unitsData.map((unit) => ({
             value: unit._id,
             label: (
@@ -791,13 +743,13 @@ const NewProduct = ({ accessToken }) => {
           rows="3"
           value={data.description}
           onChange={(e) => onChange("description", e.target.value)}
-          className="bg-slate-200 px-2 py-1 my-1 resize-none"
+          className=" bg-sky-300 focus:bg-sky-200 px-2 py-1 my-1 rounded-md hover:border-2 hover:border-pink-500 focus:border-2 focus:outline-none focus:border-pink-500 resize-none"
         ></textarea>
 
         <div className="flex justify-center">
           <button
             type="submit"
-            className="bg-gradient-to-b font-semibold text-white from-cyan-500 to-blue-500 rounded-md px-4 py-2"
+            className=" font-semibold text-white bg-gradient-to-r from-cyan-500 to-blue-500  hover:from-pink-500 hover:to-yellow-500 rounded-md px-4 py-2"
           >
             Submit
           </button>
@@ -806,7 +758,7 @@ const NewProduct = ({ accessToken }) => {
 
       <p className="text-3xl font-semibold py-10">SearchPoduct : </p>
 
-      <div className="flex flex-wrap gap-6 pt-6">
+      <div className="flex justify-center items-center flex-wrap gap-6 pt-6">
         {SearchData.map((product) => (
           <ProductItem
             key={product._id}
@@ -820,8 +772,8 @@ const NewProduct = ({ accessToken }) => {
       </div>
 
       <p className="text-3xl font-semibold py-10">Product List : </p>
-
-      <div className="flex flex-wrap gap-6 pt-6">
+     
+      <div className="  flex flex-wrap gap-6 pt-6 justify-center items-center ">
         {productData.map((product) => (
           <ProductItem
             key={product._id}
@@ -833,13 +785,14 @@ const NewProduct = ({ accessToken }) => {
           />
         ))}
       </div>
-      <div className="flex justify-evenly items-center  my-5">
-        <button
+     
+      <div className="flex justify-end items-center  my-5">
+        {/* <button
           className="bg-gradient-to-b font-semibold text-white from-cyan-500 to-blue-500 rounded-md px-4 py-2"
           onClick={handlebackpage}
         >
           Load back
-        </button>
+        </button> */}
         <button
           className="bg-gradient-to-b font-semibold text-white from-cyan-500 to-blue-500 rounded-md px-4 py-2"
           onClick={handleLoadMore}

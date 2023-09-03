@@ -88,10 +88,10 @@ const Header = () => {
   };
 
   return (
-    <header className=" shadow-md w-full h-16 px-2">
+    <header className=" bg-gradient-to-r from-indigo-400 to-pink-400 shadow-md w-full h-16 px-2">
       <div className=" flex  justify-between  items-center h-full ">
         <Link to="/">
-          <div className="text-black w-32 h-12 font-bold text-3xl">
+          <div className="text-black w-32 h-12 font-bold  text-3xl">
             {" "}
             e-Pasal{" "}
           </div>
@@ -104,11 +104,11 @@ const Header = () => {
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search products..."
-                className="bg-slate-200 border border-blue-200 rounded-md px-5 py-1 mx-2 hover:border-2  hover:border-blue-500 hover:bg-slate-100 "
+                className="bg-slate-200 border border-blue-200 rounded-md px-4 py-1 mx-1 hover:border-2  hover:border-blue-500 hover:bg-slate-100 "
               />
 
               <button
-                className="bg-slate-100 rounded-md  p-1 hover:scale-110 "
+                className="bg-blue-200 rounded-md border border-pink-400  p-1 hover:scale-110 "
                 onClick={handleSearch}
               >
                 <FcSearch size={30} />
@@ -118,7 +118,7 @@ const Header = () => {
 
           <div className="flex items-center gap-4 md:gap-7">
             <div className=" cursor-pointer " onClick={handleshowmenu}>
-              <div className="relative text-2xl text-slate-600 h-10 w-10 p-2 rounded-full overflow-hidden border border-black ">
+              <div className="relative sm:text-lg md:text-2xl text-slate-600 h-10 w-10 p-2 rounded-full overflow-hidden border border-black ">
                 {userData.image ? (
                   <img
                     src={userData.image}

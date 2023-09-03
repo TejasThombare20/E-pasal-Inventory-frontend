@@ -1,0 +1,10 @@
+.glow-border {
+    border: 2px solid transparent;
+    transition: border-color 1s ease-in-out;
+  }
+  
+  .glow-border:focus {
+    border-color: rgba(59, 130, 246, 0.5); /* Adjust the color as needed */
+    outline: none;
+    box-shadow: 0 0 10px rgba(59, 130, 246, 0.5); /* Adjust the color as needed */
+  }

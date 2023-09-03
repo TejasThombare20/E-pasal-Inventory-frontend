@@ -111,15 +111,15 @@ const Login = () => {
   };
 
   return (
-    <div>
+    <div className=" min-h-screen bg-gradient-to-r from-blue-100 via-blue-200 to-blue-100">
       <div className="p-3 md:p-5">
-        <div className="bg-white flex flex-col item items-center p-4 ">
-          <div className="w-28 overflow-hidden rounded-full drop-shadow-lg shadow-lg ">
+        <div className=" flex flex-col item justify-center items-center p-4 ">
+          <div className="w-28 overflow-hidden rounded-full drop-shadow-lg shadow-lg my-2 ">
             <img src={loginGif} className="w-full" alt=" login logo" />
           </div>
           {/* form */}
-          <div className="flex min-h-full flex-1 flex-col justify-center px-6 py-6 lg:px-8">
-            <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
+          <div className=" bg-slate-50 rounded-md  flex min-h-full flex-1 flex-col justify-center px-6 py-6 lg:px-8">
+            <div className="  mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
               <form
                 className="space-y-6"
                 action="#"
