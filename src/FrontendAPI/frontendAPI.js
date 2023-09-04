@@ -57,7 +57,7 @@ export const addProduct = async ({
 
       try {
         const response = await axios.post(
-          "http://localhost:5000/api/uploadimage",
+          `${api}/api/uploadimage`,
           formData
         );
         // setUrl(response.data.publicUrl);
