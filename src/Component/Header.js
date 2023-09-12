@@ -14,11 +14,13 @@ import { loginRedux } from "../Redux/userSlice";
 import { clearAuthToken } from "../Redux/tokenSlice";
 import { setSearchDataReducer } from "../Redux/searchSlice";
 import { FcSearch } from "react-icons/fc";
+import Loader from "../Loader"; 
 
 const Header = () => {
   const [showmenu, setmenu] = useState(false);
   const userData = useSelector((state) => state.user);
-  const adminID = process.env.REACT_APP_ADMIN_EMAIL;
+  const [loading, setLoading] = useState(false);
+
   const Navigate = useNavigate();
 
   //  console.log(userData);
@@ -73,6 +75,7 @@ const Header = () => {
       return;
     }
     try {
+      setLoading(true);
       const response = await axios.get(
         `${api}/api/product/search?query=${query}`
       );
@@ -82,8 +85,10 @@ const Header = () => {
         dispatch(setSearchDataReducer(responseData));
       }
       setSearchResults(response.data);
+      setLoading(false);
     } catch (error) {
       console.error("Error fetching search results:", error);
+      setLoading(false);
     }
   };
 
@@ -152,6 +157,7 @@ const Header = () => {
             </div>
           </div>
         </div>
+        {loading && <Loader />}
       </div>
     </header>
   );

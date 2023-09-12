@@ -199,12 +199,12 @@ const Login = () => {
                   </Link>
                 </p>
               </form>
-              <div>
+               {/* <div>
                 <h1>Google Login Example</h1>
                 {accessToken ? (
                   <div>
                     <p>Access Token: {accessToken}</p>
-                    {/* Call your backend API with the obtained access token */}
+                    // Call your backend API with the obtained access token
                   </div>
                 ) : (
                   <GoogleLogin
@@ -212,7 +212,7 @@ const Login = () => {
                     onLoginFailure={handleLoginFailure}
                   />
                 )}
-              </div>
+              </div> */}
             </div>
           </div>
         </div>
