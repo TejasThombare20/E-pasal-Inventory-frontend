@@ -5,11 +5,12 @@ import api from "../utils/api";
 import { NavLink } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { updateUnit } from "../Redux/unitSlice";
+import { setProductReducer } from "../Redux/productSlice";
 
-const UpdateUnit = ({ unitId, onClose }) => {
+const UpdateUnit = ({ unitId, unitName,productData,onClose }) => {
   const [newUnitName, setNewUnitName] = useState("");
-  const dispatch = useDispatch()
-
+  const dispatch = useDispatch();
+  console.log("unitName: " + unitName)
   const handleUpdateUnit = async () => {
     try {
       const response = await axios.put(
@@ -27,9 +28,21 @@ const UpdateUnit = ({ unitId, onClose }) => {
 
       if (response.status === 200) {
         // Update the unit name in the parent component's state
-       const responseData  = response.data
-       console.log("responseData", responseData);
-       dispatch(updateUnit(responseData))
+
+        const updatedProductData = productData.map((product) => {
+          if (product.unit === unitName) {
+            // Update the category field
+            return { ...product, unit: newUnitName };
+          }
+          return product;
+        });
+
+        console.log("updatedProductData", updatedProductData);
+
+        const responseData = response.data;
+        console.log("responseData", responseData);
+        dispatch(updateUnit(responseData));
+        dispatch(setProductReducer(updatedProductData))
         toast.success("Unit updated successfully");
         onClose();
         // window.location.reload();

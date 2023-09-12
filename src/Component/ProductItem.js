@@ -43,7 +43,7 @@ const ProductItem = ({
           <p className=" font-semibold text-gray-500">
             {" "}
             <span className="text-black">Unit :</span>
-            {product.quantity}
+            {product.unit}
           </p>
 
           <p className="text-red-500 font-semibold my-1">
@@ -56,13 +56,13 @@ const ProductItem = ({
           </p>
           <p className="text-gray-500 my-1 max-w-[200px]  break-words">
             <span className="text-black mr-2">Section : </span>
-            {product.sub_category}
+            {product.sections}
           </p>
 
-          {product.sub_sub_category && (
+          {product.sections && (
             <p className="text-gray-500 my-1 max-w-[200px]  break-words">
               <span className="text-black mr-2">Sub-section : </span>
-              {product.sub_sub_category}
+              {product.subsections}
             </p>
           )}
 
@@ -102,7 +102,7 @@ const ProductItem = ({
               Edit
             </button>
           </div>
-            <button onClick={toggleShowMore}>Show Less</button>
+          <button onClick={toggleShowMore}>Show Less</button>
         </>
       ) : (
         <button onClick={toggleShowMore}>Show More</button>

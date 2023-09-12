@@ -5,27 +5,41 @@ import api from "../utils/api";
 import { NavLink } from "react-router-dom";
 import axios from "axios";
 import { toast } from "react-hot-toast";
+import { setProductReducer } from "../Redux/productSlice";
 
-const UpdateCategory = ({ categoryId, onClose }) => {
+const UpdateCategory = ({ categoryName,categoryId,productData, onClose  }) => {
   const dispatch = useDispatch();
   const [newCategoryName, setNewCategoryName] = useState("");
 
   const handleUpdateCategory = async () => {
     try {
       const response = await axios.put(`${api}/api/category/updateCategory/${categoryId}`, {
+        previousName : categoryName,
         name: newCategoryName,
       
       });
+      console.log("productData in update category : ",productData)
+
+      const updatedProductData = productData.map((product) => {
+        if (product.category === categoryName) {
+          // Update the category field
+          return { ...product, category: newCategoryName };
+        }
+        return product;
+      });
+
+      console.log("updatedProductData",updatedProductData)
 
       // Update Redux store with the new category name
       dispatch(updateCategoryName({ categoryId, newName: newCategoryName }));
+      dispatch(setProductReducer(updatedProductData))
       toast.success("category updated successfully");
 
       // Close the modal or perform any other action after update
       onClose();
       // window.location.reload();
     } catch (error) {
-      console.error("Error updating category name:", error);
+      console.error("Error updating category name:", error.message);
     }
   };
 

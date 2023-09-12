@@ -14,58 +14,35 @@ import { deleteProductReducer, setProductReducer } from "../Redux/productSlice";
 
 // Add New product
 
-export const handleImageSubmit = async (e, file) => {
-  e.preventDefault();
-  console.log("file :", file);
-  if (file) {
-    const formData = new FormData();
-    formData.append("file", file);
-
-    console.log("formData", formData);
-
-    try {
-      const response = await axios.post(
-        "http://localhost:5000/api/uploadimage",
-        formData
-      );
-      // setUrl(response.data.publicUrl);
-    } catch (error) {
-      console.error("Error uploading image:", error);
-    }
-  }
-};
 export const addProduct = async ({
   product_name,
   category,
-  sub_category,
-  sub_sub_category,
+  sections,
+  subsections,
   description,
-  quantity,
+  unit,
   barcode,
   image,
   price,
   file,
 }) => {
   try {
-    
     console.log("file :", file);
     if (file) {
+      console.log("file",file)
       const formData = new FormData();
       formData.append("file", file.data);
 
       console.log("formData", formData);
 
       try {
-        const response = await axios.post(
-          `${api}/api/uploadimage`,
-          formData
-        );
+        const response = await axios.post(`${api}/api/uploadimage`, formData);
         // setUrl(response.data.publicUrl);
-        const publicUrl = response.data.publicUrl
+        const publicUrl = response.data.publicUrl;
         console.log("publicUrl :", publicUrl);
-         image  = publicUrl ; 
-      
-         console.log("image :", image)
+        image = publicUrl;
+
+        console.log("image :", image);
       } catch (error) {
         console.error("Error uploading image:", error);
       }
@@ -76,10 +53,10 @@ export const addProduct = async ({
       JSON.stringify({
         product_name,
         category,
-        sub_category,
-        sub_sub_category,
+        sections,
+        subsections,
         description,
-        quantity,
+        unit,
         image,
         barcode,
         price,
@@ -156,7 +133,12 @@ export const updateUnit = async (unitId, newName) => {
 };
 
 // delete the category
-export const deleteCategory = async (categoryId, dispatch) => {
+export const deleteCategory = async (
+  categoryId,
+  categoryName,
+  productData,
+  dispatch
+) => {
   const confirmDelete = window.confirm(
     "Are you sure you want to delete this category?"
   );
@@ -166,7 +148,13 @@ export const deleteCategory = async (categoryId, dispatch) => {
         `${api}/api/category/categories/${categoryId}`
       );
       if (response.status === 200) {
+        const updatedProductData = productData.filter(
+          (product) => product.category !== categoryName
+        );
+        console.log("response", response);
+        console.log("updatedProductData", updatedProductData);
         dispatch(deleteCategoryReducer(categoryId));
+        dispatch(setProductReducer(updatedProductData));
         toast("Category deleted successfully");
 
         // window.location.reload();
@@ -181,7 +169,13 @@ export const deleteCategory = async (categoryId, dispatch) => {
 };
 
 // deletion of the section
-export const deleteSection = async (categoryId, sectionId, dispatch) => {
+export const deleteSection = async (
+  categoryId,
+  sectionId,
+  sectionName,
+  productData,
+  dispatch
+) => {
   const confirmDelete = window.confirm(
     "Are you sure you want to delete this section?"
   );
@@ -191,8 +185,14 @@ export const deleteSection = async (categoryId, sectionId, dispatch) => {
         `${api}/api/category/${categoryId}/sections/${sectionId}`
       );
       if (response.status === 200) {
-        toast("Section deleted successfully");
+        const updatedProductData = productData.filter(
+          (product) => product.sections !== sectionName
+        );
+        console.log("response", response);
+        console.log("updatedProductData", updatedProductData);
+        dispatch(setProductReducer(updatedProductData));
         dispatch(deleteSectionReducer(sectionId));
+        toast("Section deleted successfully");
         // window.location.reload();
         // You might want to refresh the data or update the Redux state after deletion
       } else {
@@ -209,20 +209,29 @@ export const deleteSection = async (categoryId, sectionId, dispatch) => {
 export const deleteSubsection = async (
   categoryId,
   sectionId,
-  subsectionIndex,
+  subsectionId,
+  subsectionName,
+  productData,
   dispatch
 ) => {
-  console.log("subsectionIndex", subsectionIndex);
+  console.log("subsectionId", subsectionId);
   const confirmDelete = window.confirm(
     "Are you sure you want to delete this subsection?"
   );
   if (confirmDelete) {
     try {
       const response = await axios.delete(
-        `${api}/api/category/${categoryId}/sections/${sectionId}/subsections/${subsectionIndex}`
+        `${api}/api/category/${categoryId}/sections/${sectionId}/subsections/${subsectionId}`
       );
       if (response.status === 200) {
-        dispatch(deletesubsectionReducer(subsectionIndex));
+        const updatedProductData = productData.filter(
+          (product) => product.subsections !== subsectionName
+        );
+        console.log("response", response);
+        console.log("updatedProductData", updatedProductData);
+        dispatch(setProductReducer(updatedProductData));
+        dispatch(deleteSectionReducer(subsectionId));
+        dispatch(deletesubsectionReducer(subsectionId));
         toast("Subsection deleted successfully");
       } else {
         console.log("Unexpected response:", response.status, response.data);
@@ -233,8 +242,10 @@ export const deleteSubsection = async (
   }
 };
 
-export const handleDeleteUnitClick = async (unitId, dispatch) => {
+export const handleDeleteUnitClick = async (unitId,unitName,productData, dispatch) => {
   // const dispatch = useDispatch();
+
+  console.log("unitName: " + unitName)
   const confirmDelete = window.confirm(
     "Are you sure you want to delete this unit?"
   );
@@ -244,8 +255,16 @@ export const handleDeleteUnitClick = async (unitId, dispatch) => {
         `${api}/api/unit/deleteUnit/${unitId}`
       );
       if (response.status === 200) {
-        toast("Unit deleted successfully");
+        
+          const updatedProductData = productData.filter(
+            (product) => product.unit !== unitName
+          );
+          console.log("response", response);
+          console.log("updatedProductData", updatedProductData);
+          dispatch(setProductReducer(updatedProductData));
+        
         dispatch(deleteUnit(unitId));
+        toast("Unit deleted successfully");
       } else {
         console.log("Unexpected response:", response.status, response.data);
         toast.error("error in delete unit");
@@ -257,14 +276,13 @@ export const handleDeleteUnitClick = async (unitId, dispatch) => {
 };
 
 let accumulatedProducts = [];
-export const fetchProducts = async (dispatch, page, productData ) => {
-
-
+export const fetchProducts = async (dispatch, page, productData) => {
   try {
     const response = await axios.get(`${api}/api/product/fetchAllProduct`, {
       params: { page },
     });
-    const newProducts = response.data.products;
+    const newProducts = response.data;
+    console.log("response", response);
     console.log("newProducts", newProducts);
     // const currentProducts = useSelector((state) => state.product.productList);
     // const updatedProducts = [...productData, ...newProducts];
@@ -273,7 +291,6 @@ export const fetchProducts = async (dispatch, page, productData ) => {
 
     // accumulatedProducts.push(newProducts);
     // console.log("accumulatedProducts", accumulatedProducts)
-    
 
     dispatch(setProductReducer([...productData, ...newProducts]));
   } catch (error) {

@@ -7,7 +7,8 @@ const categorySlice = createSlice({
   initialState: {
     categories: [],
     sections: [],
-    subsections: [], selectedCategory: "", 
+    subsections: [],
+     selectedCategory: "", 
     selectedSection: "",
     selectedSubsection: "", 
   
@@ -83,29 +84,38 @@ const categorySlice = createSlice({
     },
 
     addsubsectionReducer: (state, action) => {
-      console.log("addssubsection payload", action.payload);
-      state.subsections.push(action.payload.subsection);
+      console.log("add subsection payload", action.payload);
+      state.subsections.push(action.payload);
+      console.log("subsections",state.subsections)
     },
 
     updatesubsectionReducer: (state, action) => {
-      const { subsectionIndex, newSubsectionName } = action.payload;
-      console.log("both : ", subsectionIndex, newSubsectionName);
+      const {subsectionId, newSubsectionName } = action.payload;
+      console.log("both : ",subsectionId, newSubsectionName);
 
-      if (state.subsections[subsectionIndex]) {
-        state.subsections[subsectionIndex] = newSubsectionName;
+      const subsectionToUpdate = state.subsections.find(
+        (subsection) => subsection._id === subsectionId
+      );
+      if (subsectionToUpdate) {
+        subsectionToUpdate.name = newSubsectionName;
       }
+    
     },
 
     deletesubsectionReducer: (state, action) => {
-      const subsectionIndexToDelete = action.payload;
+      const subsectionIdToDelete = action.payload;
 
-      if (
-        subsectionIndexToDelete >= 0 &&
-        subsectionIndexToDelete < state.subsections.length
-      ) {
-        state.subsections.splice(subsectionIndexToDelete, 1);
-      }
+      console.log("sectionIdToDelete", subsectionIdToDelete);
+      const newsubSections = state.subsections.filter(
+        (subsection) => subsection._id !== subsectionIdToDelete
+      );
+
+      return {
+        ...state,
+        subsections: newsubSections,
+      };
     },
+      
 
     setSelectedCategoryReducer: (state, action) => {
       state.selectedCategory = action.payload;

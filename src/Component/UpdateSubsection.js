@@ -6,31 +6,43 @@ import { NavLink } from "react-router-dom";
 import axios from "axios";
 import { toast } from "react-hot-toast";
 import { updatesubsectionReducer } from "../Redux/categorySlice";
+import { setProductReducer } from "../Redux/productSlice";
 
 const UpdateSubsection = ({
   categoryId,
   sectionId,
-  subsectionIndex,
+  subsectionId,
+  subsectionName,
+  productData,
   onClose,
 }) => {
   console.log("sectionId : ", sectionId);
-  console.log("subsectionIndex :", subsectionIndex);
+  console.log("subsectionId :", subsectionId);
   const dispatch = useDispatch();
   const [newSubsectionName, setNewSubsectionName] = useState("");
 
   const handleUpdateSubsection = async () => {
     console.log("newSubsectionName", newSubsectionName);
-    console.log("subsectionIndex", subsectionIndex);
+    console.log("subsectionId", subsectionId);
 
     try {
       const response =  await axios.put(
-        `${api}/api/category/${categoryId}/updateSubsection/${sectionId}/${subsectionIndex}`,
+        `${api}/api/category/${categoryId}/updateSubsection/${sectionId}/${subsectionId}`,
         {
           newSubsectionName,
         }
       );
+
+      const updatedProductData = productData.map((product) => {
+        if (product.subsections === subsectionName) {
+          // Update the category field
+          return { ...product, subsections: newSubsectionName };
+        }
+        return product;
+      });
       if (response.status  === 200) {
-          dispatch(updatesubsectionReducer({sectionId,subsectionIndex, newSubsectionName}))
+          dispatch(updatesubsectionReducer({sectionId,subsectionId, newSubsectionName}))
+          dispatch(setProductReducer(updatedProductData))
         toast.success("Subsection updated successfully");
       }
 

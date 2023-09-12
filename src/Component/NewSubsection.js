@@ -21,9 +21,15 @@ const AddSubsection = ({ selectedCategory, selectedSection, onClose }) => {
 
       if (response.status === 200) {
         console.log("response: ", response);
-        const newSubsection = response.data.subsection;
+        // const newSubsection = response.data.section.subsections;
+        const newsubSection = response.data.section.subsections.find(
+          (subsection) => subsection.name === newSubsectionName
+        );
 
-        dispatch(addsubsectionReducer({ subsection: newSubsection }));
+        console.log("response Data", response.data)
+        console.log("newsubSection: ",newsubSection)
+
+        dispatch(addsubsectionReducer(newsubSection));
        
 
         toast.success("Subsection added successfully");

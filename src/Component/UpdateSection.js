@@ -6,8 +6,9 @@ import { NavLink } from "react-router-dom";
 import axios from "axios";
 import { toast } from "react-hot-toast";
 import { updateSectionReducer } from "../Redux/categorySlice";
+import { setProductReducer } from "../Redux/productSlice";
 
-const UpdateSection = ({ categoryId, sectionId, onClose }) => {
+const UpdateSection = ({ categoryId, sectionId, sectionName,productData, onClose }) => {
   const [newSectionName, setNewSectionName] = useState("");
   const dispatch = useDispatch();
 
@@ -18,11 +19,22 @@ const UpdateSection = ({ categoryId, sectionId, onClose }) => {
         {
           name: newSectionName,
         }
-      );
+      ); 
+      console.log("sectionName : ",sectionName)
 
+      const updatedProductData = productData.map((product) => {
+        if (product.sections === sectionName) {
+          // Update the sections field
+          return { ...product, sections: newSectionName };
+        }
+        return product;
+      });
+
+       console.log("updatedProductData",updatedProductData)
       console.log("response", response);
       if (response.status === 200) {
         dispatch(updateSectionReducer({sectionId ,newSectionName }));
+        dispatch(setProductReducer(updatedProductData))
         toast.success("section updated successfully");
       }
       onClose();

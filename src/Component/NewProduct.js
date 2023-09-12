@@ -36,8 +36,7 @@ import { FiEdit } from "react-icons/fi";
 import { MdDelete } from "react-icons/md";
 import { setUnits } from "../Redux/unitSlice";
 import { setSectionsReducer } from "../Redux/categorySlice";
-import '../custom.css'
-
+import "../custom.css";
 
 const NewProduct = ({ accessToken }) => {
   const dispatch = useDispatch();
@@ -56,8 +55,6 @@ const NewProduct = ({ accessToken }) => {
   const SearchData = useSelector((state) => state.search.productList);
   console.log("SearchData", SearchData);
 
- 
-
   const [selectedCategory, setSelectedCategory] = useState(""); // Add this line
 
   const [sectionsForSelectedCategory, setSectionsForSelectedCategory] =
@@ -69,12 +66,12 @@ const NewProduct = ({ accessToken }) => {
   const [data, setdata] = useState({
     product_name: "",
     category: "",
-    sub_category: "",
-    sub_sub_category: "",
+    sections: "",
+    subsections: "",
     image: "",
     barcode: "",
     price: "",
-    quantity: "",
+    unit: "",
     description: "",
   });
 
@@ -97,15 +94,7 @@ const NewProduct = ({ accessToken }) => {
     }
   };
 
-  // function convertDriveLinkToDirectLink(driveLink) {
-  //   const fileIdMatch = driveLink.match(/\/d\/([a-zA-Z0-9_-]+)\//);
-  //   if (fileIdMatch && fileIdMatch[1]) {
-  //     const fileId = fileIdMatch[1];
-  //     return `https://drive.google.com/uc?export=view&id=${fileId}`;
-  //   } else {
-  //     return driveLink;
-  //   }
-  // }
+
   const [file, setFile] = useState(null);
   const onChange = (name, selectedValue) => {
     console.log("Selected value:", selectedValue);
@@ -118,16 +107,16 @@ const NewProduct = ({ accessToken }) => {
 
       setdata((prevData) => ({
         ...prevData,
-        category: selectedCategoryData?.name || "",
-        sub_category: "", // Reset sub-category when category changes
-        sub_sub_category: "", // Reset sub-sub-category when category changes
+        category: selectedCategoryData?._id || "",
+        sections: "", // Reset sub-category when category changes
+        subsections: "", // Reset sub-sub-category when category changes
       }));
       const sectionsForSelectedCategory = selectedCategoryData?.sections || [];
       dispatch(setSectionsReducer(sectionsForSelectedCategory));
       setSectionsForSelectedCategory(sectionsForSelectedCategory);
       setSelectedSubcategory("");
       setSelectedSubsection("");
-    } else if (name === "sub_category") {
+    } else if (name === "sections") {
       // const selectedSectionData = sectionsForSelectedCategory.find(
       //   (section) => section._id === selectedValue
       // );
@@ -144,8 +133,8 @@ const NewProduct = ({ accessToken }) => {
       //   // sub_category: selectedSectionData?.name || "",
       //   sub_sub_category: "", // Reset sub-sub-category when sub-category changes
       // }));
-      data.sub_category = selectedSectionData.name;
-      console.log("sub_category1 :", data.sub_category);
+      data.sections = selectedSectionData._id;
+      console.log("sub_category1 :", data.sections);
       const subsectionsForSelectedSection =
         selectedSectionData?.subsections || [];
 
@@ -155,7 +144,7 @@ const NewProduct = ({ accessToken }) => {
       );
       dispatch(setsubsectionsReducer(subsectionsForSelectedSection));
       setSubsectionsForSelectedSection(subsectionsForSelectedSection);
-    } else if (name === "sub_sub_category") {
+    } else if (name === "subsections") {
       console.log("selectedValue", selectedValue);
 
       // const selectedSubsectionIndex = CategoryData.find(
@@ -166,9 +155,10 @@ const NewProduct = ({ accessToken }) => {
       // setSelectedSubsection(selectedSubsectionIndex);
       setdata((prevData) => ({
         ...prevData,
-        sub_sub_category: selectedValue,
+        subsections: selectedValue,
       }));
     } else if (name === "image") {
+
       console.log("selectedValue:", selectedValue);
       if (selectedValue) {
         const img = {
@@ -176,8 +166,10 @@ const NewProduct = ({ accessToken }) => {
           data: selectedValue,
         };
         setFile(img);
+        
       }
     } else {
+      console.log("selectedValue:", selectedValue);
       setdata((prevData) => ({
         ...prevData,
         [name]: selectedValue,
@@ -193,10 +185,10 @@ const NewProduct = ({ accessToken }) => {
     const {
       product_name,
       category,
-      sub_category,
-      sub_sub_category,
+      sections,
+      subsections,
       description,
-      quantity,
+      unit,
       image,
       barcode,
       price,
@@ -206,10 +198,10 @@ const NewProduct = ({ accessToken }) => {
       const newProduct = await addProduct({
         product_name,
         category,
-        sub_category,
-        sub_sub_category,
+        sections,
+        subsections,
         description,
-        quantity,
+        unit,
         image,
         barcode,
         price,
@@ -220,21 +212,46 @@ const NewProduct = ({ accessToken }) => {
       } else {
         const addProductData = newProduct.savedProduct;
 
+        const categoryName =
+          CategoryData.find((cat) => cat._id === addProductData.category)
+            ?.name || "";
+        const sectionName =
+          SectionData.find((sec) => sec._id === addProductData.sections)
+            ?.name || "";
+        const subsectionName =
+          subsectionData.find(
+            (subsec) => subsec._id === addProductData.subsections
+          )?.name || "";
+          
+        const unitName = unitsData.find(
+          (unit) => unit._id === addProductData.unit
+        )?.name || "";
+
+        const modifiedProductData = {
+          ...addProductData,
+          category: categoryName,
+          sections: sectionName,
+          subsections: subsectionName,
+          unit : unitName
+        };
+
         console.log("addProductData", addProductData);
-        dispatch(addProductReducer(addProductData));
+        console.log("modifiedProductData", modifiedProductData);
+
+        dispatch(addProductReducer(modifiedProductData));
         toast.success("Product added successfully");
         setdata({
           product_name: "",
           category: " ",
-          sub_category: "",
-          sub_sub_category: "",
+          sections: "",
+          subsections: "",
           description: "",
-          quantity: "",
+          unit: "",
           image: "",
           barcode: "",
           price: "",
         });
-        setFile(null)
+        setFile(null);
 
         setSelectedCategory(null); // Reset selected category
         setSelectedSubcategory(null); // Reset selected sub-category
@@ -259,11 +276,16 @@ const NewProduct = ({ accessToken }) => {
     useState(false);
   const [selectedCategoryForUpdate, setSelectedCategoryForUpdate] =
     useState(null);
+  const [selectedCatgoryNameForUpdate, setSelectedCatgoryNameForUpdate] =
+    useState(null);
 
-  const handleUpdateCategoryClick = (categoryId) => {
+  const handleUpdateCategoryClick = (categoryId, categoryName ) => {
     console.log("categoryId : ", categoryId);
+    console.log(categoryName);
+  //  console.log(" previous productData : ", productData);
 
     setSelectedCategoryForUpdate(categoryId);
+    setSelectedCatgoryNameForUpdate(categoryName);
     setIsUpdateCategoryModalOpen(true);
   };
 
@@ -276,10 +298,12 @@ const NewProduct = ({ accessToken }) => {
 
   const [selectedUpdateSection, setSelectedUpdateSection] = useState({
     sectionId: null,
+    sectionName : null,
     categoryId: null,
+
   });
 
-  const handleUpdateSectionClick = (sectionId) => {
+  const handleUpdateSectionClick = (sectionId,sectionName) => {
     const selectedSection = sectionsForSelectedCategory.find(
       (section) => section._id === sectionId
     );
@@ -287,6 +311,7 @@ const NewProduct = ({ accessToken }) => {
     if (selectedSection) {
       setSelectedUpdateSection({
         sectionId,
+        sectionName : sectionName,
         categoryId: selectedCategory,
       });
       setIsUpdateSectionModalOpen(true);
@@ -301,19 +326,22 @@ const NewProduct = ({ accessToken }) => {
     categoryId: null,
     sectionId: null,
     // subsectionIndex: null,
-    index: null,
+    subsectionId: null,
+    subsectionName : null,
   });
   const handleUpdateSubsectionClick = (
     categoryId,
     sectionId,
     // subsectionIndex
-    index
+    subsectionId,
+    subsectionName
   ) => {
     setIsUpdateSubsectionModalOpen(true);
     setSelectedUpdateSubsection({
       categoryId,
       sectionId,
-      index,
+      subsectionId,
+      subsectionName
       // subsectionIndex: sectionsForSelectedCategory
       //   .find((section) => section._id === sectionId)
       //   .subsections.indexOf(subsectionIndex), // Get the index of the subsection
@@ -328,12 +356,14 @@ const NewProduct = ({ accessToken }) => {
     fetchUnitsData();
   }, []);
   const unitsData = useSelector((state) => state.units);
-  // console.log("unitsData", unitsData);
+  console.log("unitsData", unitsData);
 
   const [selectedUnitForUpdate, setSelectedUnitForUpdate] = useState(null);
-  const handleUpdateUnitClick = (unitId) => {
+  // const [selectedUnitNameForUpdate, setSelectedUnitNameForUpdate] = useState(null);
+  const handleUpdateUnitClick = (unitId,UnitName) => {
     const selectedUnit = unitsData.find((unit) => unit._id === unitId);
     setSelectedUnitForUpdate(selectedUnit);
+    // setSelectedUnitNameForUpdate(UnitName)
   };
 
   const [isAddSectionModalOpen, setIsAddSectionModalOpen] = useState(false);
@@ -357,14 +387,13 @@ const NewProduct = ({ accessToken }) => {
     setIsAddUnitOpen(false);
   };
 
-
   const [page, setPage] = useState(1);
-//   const [isProdctData, setisProdctData] = useState([])
+  //   const [isProdctData, setisProdctData] = useState([])
 
-// setisProdctData(productData);
-// console.log("previous isProdctData", isProdctData);
+  // setisProdctData(productData);
+  // console.log("previous isProdctData", isProdctData);
   useEffect(() => {
-    fetchProducts(dispatch, page , productData );
+    fetchProducts(dispatch, page, productData);
   }, [page]);
 
   useEffect(() => {
@@ -393,7 +422,7 @@ const NewProduct = ({ accessToken }) => {
   const customStyles = {
     control: (provided) => ({
       ...provided,
-      backgroundColor: 'rgba(125, 211 ,252)', // Set the background color for the control (input)
+      backgroundColor: "rgba(125, 211 ,252)", // Set the background colo`r for the control (input)
     }),
     dropdownIndicator: (provided) => ({
       ...provided,
@@ -401,7 +430,7 @@ const NewProduct = ({ accessToken }) => {
     }),
     option: (provided) => ({
       ...provided,
-      backgroundColor: 'rgba(186, 230, 253)', // Set the background color of each option
+      backgroundColor: "rgba(186, 230, 253)", // Set the background color of each option
     }),
   };
 
@@ -409,8 +438,9 @@ const NewProduct = ({ accessToken }) => {
     <div className="min-w-full bg-gradient-to-l from-teal-500 to-blue-500">
       <form
         //  style={formStyle}
-        className={`p-4 m-auto   w-full max-w-md shadow-xl drop-shadow-2xl flex flex-col rounded-md  ${isSubmitted ? 'glow-border' : ''}`}
-       
+        className={`p-4 m-auto   w-full max-w-md shadow-xl drop-shadow-2xl flex flex-col rounded-md  ${
+          isSubmitted ? "glow-border" : ""
+        }`}
         action=""
         onSubmit={handleSubmit}
       >
@@ -445,7 +475,7 @@ const NewProduct = ({ accessToken }) => {
         )}
         {CategoryData && (
           <Select
-          styles={customStyles}
+            styles={customStyles}
             options={CategoryData.map((category) => ({
               value: category._id,
 
@@ -455,13 +485,15 @@ const NewProduct = ({ accessToken }) => {
                   <div className="flex gap-2">
                     <NavLink
                       className="bg-green-400 text-sm text-white px-2 py-1 rounded"
-                      onClick={() => handleUpdateCategoryClick(category._id)}
+                      onClick={() =>
+                        handleUpdateCategoryClick(category._id, category.name )
+                      }
                     >
                       <FiEdit size={15} />
                     </NavLink>
                     <NavLink
                       className="bg-red-500  text-sm text-white px-2 py-1 rounded"
-                      onClick={() => deleteCategory(category._id, dispatch)}
+                      onClick={() => deleteCategory(category._id, category.name,productData,dispatch)}
                     >
                       <MdDelete size={15} />
                     </NavLink>
@@ -470,14 +502,17 @@ const NewProduct = ({ accessToken }) => {
               ),
             }))}
             required
-            onChange={(selectedOption) =>
-              onChange("category", selectedOption.value)
-            }
+            onChange={(selectedOption) => {
+              console.log("selectedOption", selectedOption);
+              onChange("category", selectedOption.value);
+            }}
           />
         )}
         {isUpdateCategoryModalOpen && (
           <UpdateCategory
+            categoryName={selectedCatgoryNameForUpdate}
             categoryId={selectedCategoryForUpdate}
+            productData={productData}
             onClose={() => setIsUpdateCategoryModalOpen(false)}
           />
         )}
@@ -504,7 +539,7 @@ const NewProduct = ({ accessToken }) => {
         )}
 
         <Select
-        styles={customStyles}
+          styles={customStyles}
           options={SectionData.map((section) => ({
             value: section._id,
             label: (
@@ -513,14 +548,14 @@ const NewProduct = ({ accessToken }) => {
                 <div className="flex gap-2">
                   <NavLink
                     className="bg-green-400 text-white px-2 py-1 rounded"
-                    onClick={() => handleUpdateSectionClick(section._id)}
+                    onClick={() => handleUpdateSectionClick(section._id , section.name)}
                   >
                     <FiEdit size={15} />
                   </NavLink>
                   <NavLink
                     className="bg-red-500 text-white px-2 py-1 rounded"
                     onClick={() =>
-                      deleteSection(selectedCategory, section._id, dispatch)
+                      deleteSection(selectedCategory, section._id,section.name,productData,dispatch)
                     }
                   >
                     <MdDelete size={15} />
@@ -531,8 +566,8 @@ const NewProduct = ({ accessToken }) => {
           }))}
           required
           onChange={(selectedOption) => {
-            onChange("sub_category", selectedOption.value);
-            console.log("sub category :", data.sub_category);
+            onChange("sections", selectedOption.value);
+            console.log("sections:", data.sections);
           }}
           isDisabled={!selectedCategory} // Disable the dropdown if no category is selected
         />
@@ -543,6 +578,8 @@ const NewProduct = ({ accessToken }) => {
           <UpdateSection
             sectionId={selectedUpdateSection.sectionId}
             categoryId={selectedUpdateSection.categoryId}
+            sectionName={selectedUpdateSection.sectionName}
+            productData={productData}
             onClose={() => setIsUpdateSectionModalOpen(false)}
           />
         )}
@@ -570,18 +607,18 @@ const NewProduct = ({ accessToken }) => {
         )}
 
         <Select
-        styles={customStyles}
+          styles={customStyles}
           options={
             // selectedSubcategory
             //   ? sectionsForSelectedCategory
             //       .find((section) => section._id === selectedSubcategory)
             //       .subsectionData.map((subsection, index) => ({
             sectionsForSelectedCategory && subsectionData
-              ? subsectionData.map((subsection, index) => ({
-                  value: subsection,
+              ? subsectionData.map((subsection) => ({
+                  value: subsection._id,
                   label: (
                     <div className="flex items-center justify-between">
-                      {subsection}
+                      {subsection.name}
                       <div className="flex gap-2">
                         <NavLink
                           className="bg-green-400 text-white px-2 py-1 rounded"
@@ -589,7 +626,8 @@ const NewProduct = ({ accessToken }) => {
                             handleUpdateSubsectionClick(
                               selectedCategory,
                               selectedSubcategory,
-                              index
+                              subsection._id,
+                              subsection.name
                             )
                           }
                         >
@@ -601,7 +639,9 @@ const NewProduct = ({ accessToken }) => {
                             deleteSubsection(
                               selectedCategory,
                               selectedSubcategory,
-                              index,
+                              subsection._id,
+                              subsection.name,
+                              productData,
                               dispatch
                             );
                           }}
@@ -616,7 +656,7 @@ const NewProduct = ({ accessToken }) => {
           }
           isDisabled={!selectedSubcategory}
           onChange={(selectedOption) =>
-            onChange("sub_sub_category", selectedOption.value)
+            onChange("subsections", selectedOption.value)
           }
         />
 
@@ -626,7 +666,9 @@ const NewProduct = ({ accessToken }) => {
             categoryId={selectedUpdateSubsection.categoryId}
             sectionId={selectedUpdateSubsection.sectionId}
             // subsectionIndex={selectedUpdateSubsection.subsectionIndex}
-            subsectionIndex={selectedUpdateSubsection.index}
+            subsectionId={selectedUpdateSubsection.subsectionId}
+            subsectionName={selectedUpdateSubsection.subsectionName}
+            productData={productData}
             onClose={() => setIsUpdateSubsectionModalOpen(false)}
           />
         )}
@@ -651,7 +693,10 @@ const NewProduct = ({ accessToken }) => {
               accept="image/*"
               id="image"
               required
-              onChange={(e) => onChange("image", e.target.files[0])}
+              onChange={(e) =>{
+                console.log(e)
+                onChange("image", e.target.files[0])}
+              }
               className="hidden"
             />
           </div>
@@ -684,7 +729,7 @@ const NewProduct = ({ accessToken }) => {
         />
 
         <div className="flex justify-start items-center gap-52 my-2">
-          <label htmlFor="quantity" className="mt-1">
+          <label htmlFor="unit" className="mt-1">
             Unit :
           </label>
           <NavLink
@@ -697,15 +742,17 @@ const NewProduct = ({ accessToken }) => {
         {isAddUnitOpen && <NewUnit onClose={handleCloseAddUnit} />}
 
         {selectedUnitForUpdate && (
-          <UpdateUnit 
+          <UpdateUnit
             unitId={selectedUnitForUpdate._id}
+            unitName={selectedUnitForUpdate.name}
+            productData={productData}
             onClose={() => setSelectedUnitForUpdate(null)}
             // updateUnitCallback={handleUnitUpdate}
           />
         )}
-        
+
         <Select
-        styles={customStyles}
+          styles={customStyles}
           options={unitsData.map((unit) => ({
             value: unit._id,
             label: (
@@ -714,13 +761,13 @@ const NewProduct = ({ accessToken }) => {
                 <div className="flex gap-2">
                   <NavLink
                     className="bg-green-400 text-white px-2 py-1 rounded"
-                    onClick={() => handleUpdateUnitClick(unit._id)}
+                    onClick={() => handleUpdateUnitClick(unit._id,unit.name)}
                   >
                     <FiEdit size={15} />
                   </NavLink>
                   <NavLink
                     className="bg-red-500 text-white px-2 py-1 rounded"
-                    onClick={() => handleDeleteUnitClick(unit._id, dispatch)}
+                    onClick={() => handleDeleteUnitClick(unit._id,unit.name,productData, dispatch)}
                   >
                     <MdDelete size={15} />
                   </NavLink>
@@ -730,12 +777,14 @@ const NewProduct = ({ accessToken }) => {
           }))}
           required
           onChange={(selectedOption) =>
-            onChange("quantity", selectedOption.label.props.children[0])
+            // onChange("unit", selectedOption.label.props.children[0])
+            onChange("unit", selectedOption.value)
+
           }
         />
 
         <label htmlFor="description" className="mt-1">
-          Description :
+          Description : 
         </label>
         <textarea
           name="description"
@@ -755,24 +804,27 @@ const NewProduct = ({ accessToken }) => {
           </button>
         </div>
       </form>
+      {SearchData && (
+        <>
+          <p className="text-3xl font-semibold py-10">Search Product : </p>
 
-      <p className="text-3xl font-semibold py-10">SearchPoduct : </p>
-
-      <div className="flex justify-center items-center flex-wrap gap-6 pt-6">
-        {SearchData.map((product) => (
-          <ProductItem
-            key={product._id}
-            product={product}
-            expandedProducts={expandedProducts}
-            toggleDescription={toggleDescription}
-            deleteProduct={deleteProduct}
-            handleUpdateClick={handleUpdateClick}
-          />
-        ))}
-      </div>
+          <div className="flex justify-center items-center flex-wrap gap-6 pt-6">
+            {SearchData.map((product) => (
+              <ProductItem
+                key={product._id}
+                product={product}
+                expandedProducts={expandedProducts}
+                toggleDescription={toggleDescription}
+                deleteProduct={deleteProduct}
+                handleUpdateClick={handleUpdateClick}
+              />
+            ))}
+          </div>
+        </>
+      )}
 
       <p className="text-3xl font-semibold py-10">Product List : </p>
-     
+
       <div className="  flex flex-wrap gap-6 pt-6 justify-center items-center ">
         {productData.map((product) => (
           <ProductItem
@@ -785,7 +837,7 @@ const NewProduct = ({ accessToken }) => {
           />
         ))}
       </div>
-     
+
       <div className="flex justify-end items-center  my-5">
         {/* <button
           className="bg-gradient-to-b font-semibold text-white from-cyan-500 to-blue-500 rounded-md px-4 py-2"
