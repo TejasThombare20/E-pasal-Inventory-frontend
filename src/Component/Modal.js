@@ -22,13 +22,13 @@ function Modal({ product, onClose }) {
 
   const [data, setdata] = useState({
     u_product_name: "",
-    u_category: "",
-    u_sub_category: "",
-    u_sub_sub_category: "",
-    u_description: "",
-    u_image: "",
-    u_barcode: "",
-    u_quantity: "",
+    u_category: "", 
+    u_sub_category:"", 
+    u_sub_sub_category: "", 
+    u_description:  "",
+    u_image: "", 
+    u_barcode:"",
+    u_quantity:"",
     u_price: "",
   });
 
@@ -60,12 +60,13 @@ function Modal({ product, onClose }) {
 
   const [subCategories, setSubCategories] = useState([]);
   const [subSubSections, setSubSubSections] = useState([]);
+  const [file ,setFile] =useState(null)
 
   const handleChange = (name, selectedValue) => {
     console.log("selectedValue: " + selectedValue);
     if (name === "category") {
       const selectedCategory = CategoryData.find(
-        (category) => category.name === selectedValue
+        (category) => category._id === selectedValue
       );
 
       // Update the sub-categories based on the selected category
@@ -82,7 +83,7 @@ function Modal({ product, onClose }) {
       console.log("subCategories", subCategories);
     } else if (name === "sections") {
       const selectedSubCategory = subCategories.find(
-        (subCategory) => subCategory.name === selectedValue
+        (subCategory) => subCategory._id === selectedValue
       );
       console.log("selectedSubCategory", selectedSubCategory);
 
@@ -102,16 +103,46 @@ function Modal({ product, onClose }) {
         console.log("hello");
       }
     } else if (name === "subsections") {
-      const selectedSubsubCategory = subCategories.find(
-        (subCategory) => subCategory.name === selectedValue
+      console.log("selectedValue - ", selectedValue);
+      
+      const selectedSubsubCategory = subSubSections.find(
+        (subsection) => subsection._id === selectedValue
       );
-
+      console.log("selectedSubsubCategory: " + selectedSubsubCategory); 
+      console.log("selectedSubsubCategory._id", selectedSubsubCategory._id);
       // Update the sub-categories based on the selected category
       setdata((prevData) => ({
         ...prevData,
         u_sub_sub_category: selectedSubsubCategory._id, // Reset sub-sub-category when sub-category changes
       }));
-    } else {
+    }
+    else if(name === "u_quantity") {
+
+      const selectedUnitData = unitData.find(
+        (unit)=>unit._id === selectedValue)
+        console.log("selectedUnitData", selectedUnitData);
+        console.log("selectedUnitDataID", selectedUnitData._id); 
+
+        setdata((prevData) => ({
+          ...prevData,
+          u_quantity : selectedUnitData._id
+
+        })
+        )
+    }else if (name === "u_image") {
+
+      console.log("selectedValue:", selectedValue);
+      if (selectedValue) {
+        const img = {
+          preview: URL.createObjectURL(selectedValue),
+          data: selectedValue,
+        };
+        setFile(img);
+        
+      }
+    }
+    else {
+      console.log("selectedValue", selectedValue);
       setdata((prevData) => ({
         ...prevData,
         [name]: selectedValue,
@@ -140,7 +171,38 @@ function Modal({ product, onClose }) {
         u_barcode,
         u_price,
       } = data;
-      const updatedProduct = {};
+      const updatedProduct = {}; 
+
+      if (file) {
+        console.log("file",file)
+        const formData = new FormData();
+        formData.append("file", file.data);
+  
+        console.log("formData", formData);
+  
+        try {
+          const response = await axios.post(`${api}/api/uploadimage`, formData);
+          // setUrl(response.data.publicUrl);
+          const publicUrl = await  response.data.publicUrl;
+          console.log("publicUrl :", publicUrl);
+
+         await setdata((prevData) => ({
+            ...prevData,
+            u_image: publicUrl, // Update u_image using setdata
+          }));
+
+          updatedProduct.u_image = publicUrl;
+
+  
+          console.log("image :", u_image);
+        } catch (error) {
+          console.error("Error uploading image:", error);
+        }
+      }
+
+      console.log("data.u_image",data.u_image)
+    
+      
       if (u_product_name) updatedProduct.u_product_name = u_product_name;
       if (u_category) updatedProduct.u_category = u_category;
       if (u_sub_category) updatedProduct.u_sub_category = u_sub_category;
@@ -148,7 +210,7 @@ function Modal({ product, onClose }) {
         updatedProduct.u_sub_sub_category = u_sub_sub_category;
       if (u_description) updatedProduct.u_description = u_description;
       if (u_quantity) updatedProduct.u_quantity = u_quantity;
-      if (u_image) updatedProduct.u_image = u_image;
+      // if (data.u_image) updatedProduct.u_image = data.u_image;
       if (u_price) updatedProduct.u_price = u_price;
       if (u_barcode) updatedProduct.u_barcode = u_barcode;
       console.log("updatedProduct", updatedProduct);
@@ -195,10 +257,8 @@ function Modal({ product, onClose }) {
                 type="text"
                 name="u_product_name"
                 value={data.u_product_name}
-                placeholder={product.product_name}
-                onChange={(e) => {
-                  handleChange("product_name", e.target.value);
-                }}
+                // placeholder={product.product_name}
+                onChange={(e) => {handleChange("u_product_name", e.target.value);}}
                 className="bg-slate-200 px-2 py-1 my-1"
               />
               <label htmlFor="u_category" className="mt-1">
@@ -216,7 +276,7 @@ function Modal({ product, onClose }) {
               >
                 <option value="">Select a category</option>
                 {CategoryData.map((category) => (
-                  <option key={category._id} value={category.name}>
+                  <option key={category._id} value={category._id}>
                     {category.name}
                   </option>
                 ))}
@@ -236,7 +296,7 @@ function Modal({ product, onClose }) {
               >
                 <option value="">Select a section</option>
                 {subCategories.map((subCategory) => (
-                  <option key={subCategory._id} value={subCategory.name}>
+                  <option key={subCategory._id} value={subCategory._id}>
                     {subCategory.name}
                   </option>
                 ))}
@@ -248,16 +308,17 @@ function Modal({ product, onClose }) {
               <select
                 name="u_sub_sub_category"
                 id="u_sub_sub_category"
-                onChange={(selectedOption) =>
+                onChange={(selectedOption) =>{
+                  console.log(selectedOption)
                   handleChange("subsections", selectedOption.target.value)
-                }
+                }}
                 value={data.u_sub_sub_category}
                 className="bg-slate-200 px-2 py-1 my-1"
               >
                 <option value="">Select a subsection</option>
                 {subSubSections.map((subSubSection) => (
-                  <option key={subSubSection} value={subSubSection}>
-                    {subSubSection}
+                  <option key={subSubSection._id} value={subSubSection._id}>
+                    {subSubSection.name}
                   </option>
                 ))}
               </select>
@@ -265,9 +326,9 @@ function Modal({ product, onClose }) {
               <label htmlFor="u_image" className="mt-1 cursor-pointer">
                 Image :
                 <div className="h-40 w-full bg-slate-200  my-1 py-1 flex items-center justify-center">
-                  {data.u_image ? (
+                  {file ? (
                     <img
-                      src={data.u_image}
+                      src={file.preview}
                       className="h-full"
                       alt="productImage"
                     />
@@ -282,7 +343,7 @@ function Modal({ product, onClose }) {
                     accept="image/*"
                     id="u_image"
                     onChange={(e) => {
-                      handleChange("image", e.target.files[0]);
+                      handleChange("u_image", e.target.files[0]);
                     }}
                     className="hidden"
                     placeholder={product.image}
@@ -299,7 +360,7 @@ function Modal({ product, onClose }) {
                 id="u_barcode"
                 value={data.u_barcode}
                 onChange={(e) => {
-                  handleChange("barcode", e.target.value);
+                  handleChange("u_barcode", e.target.value);
                 }}
                 placeholder={product.barcode}
                 className="bg-slate-200 px-2 py-1 my-1"
@@ -313,32 +374,31 @@ function Modal({ product, onClose }) {
                 id="u_price"
                 value={data.u_price}
                 onChange={(e) => {
-                  handleChange("barcode", e.target.value);
+                  handleChange("u_price", e.target.value);
                 }}
                 placeholder={product.price}
                 className="bg-slate-200 px-2 py-1 my-1"
               />
-              <label htmlFor="u_price" className="mt-1">
+              <label htmlFor="u_quantity" className="mt-1">
                 Unit :
               </label>
               <select
                 name="u_quantity"
                 id="u_quantity"
                 onChange={(selectedOption) =>
-                  // onChange("unit", selectedOption.label.props.children[0])
-                  handleChange("unit", selectedOption.value)
+                  handleChange("u_quantity", selectedOption.target.value)
                 }
-                defaultValue={product.quantity}
+                
                 className="bg-slate-200 px-2 py-1 my-1"
               >
                 <option value="">Select a unit</option>
                 {unitData.map((Unit) => (
-                  <option key={Unit._id} value={Unit.name}>
+                  <option key={Unit._id} value={Unit._id}>
                     {Unit.name}
                   </option>
                 ))}
               </select>
-              <label htmlFor="description" className="mt-1">
+              <label htmlFor="u_description" className="mt-1">
                 Description :
               </label>
               <textarea
@@ -347,7 +407,7 @@ function Modal({ product, onClose }) {
                 rows="3"
                 value={data.u_description}
                 onChange={(e) => {
-                  handleChange("description", e.target.value);
+                  handleChange("u_description", e.target.value);
                 }}
                 className="bg-slate-200 px-2 py-1 my-1 resize-none"
                 placeholder={product.description}

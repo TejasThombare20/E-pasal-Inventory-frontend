@@ -41,6 +41,7 @@ const UpdateUnit = ({ unitId, unitName,productData,onClose }) => {
 
         const responseData = response.data;
         console.log("responseData", responseData);
+        
         dispatch(updateUnit(responseData));
         dispatch(setProductReducer(updatedProductData))
         toast.success("Unit updated successfully");
