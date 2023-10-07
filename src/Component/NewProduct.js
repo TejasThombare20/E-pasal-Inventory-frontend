@@ -454,7 +454,7 @@ const NewProduct = ({ accessToken }) => {
           value={data.product_name}
           required
           onChange={(e) => onChange("product_name", e.target.value)}
-          className="bg-sky-300 focus:bg-sky-200 px-2 py-1 my-1 rounded-md hover:border-2 hover:border-pink-500 focus:border-2 focus:outline-none focus:border-pink-500"
+          className="bg-sky-100 focus:bg-sky-200 px-2 py-1 my-1 rounded-md hover:border-2 hover:border-pink-500 focus:border-2 focus:outline-none focus:border-pink-500"
         />
 
         {/* Category Dropdown */}
